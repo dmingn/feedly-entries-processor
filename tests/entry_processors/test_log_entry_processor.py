@@ -83,4 +83,4 @@ def test_log_entry_processor_process_entry(
 def test_log_entry_processor_validation_error_invalid_level() -> None:
     """Test that ValidationError is raised for an invalid log level."""
     with pytest.raises(ValidationError):
-        LogEntryProcessor(level="invalid")
+        LogEntryProcessor(level="invalid")  # type: ignore[arg-type, unused-ignore]

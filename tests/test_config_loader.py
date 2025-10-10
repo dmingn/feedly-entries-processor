@@ -86,7 +86,7 @@ def test_load_config_invalid_schema(invalid_schema_file: Path) -> None:
 def test_save_config_and_load_back(tmp_path: Path) -> None:
     """Test that a Config object can be saved and loaded back correctly."""
     original_config = Config(
-        rules=[
+        rules=(
             Rule(
                 name="Saved Rule",
                 match=StreamIdInMatcher(
@@ -96,8 +96,8 @@ def test_save_config_and_load_back(tmp_path: Path) -> None:
                     processor_name="log",
                     level="info",
                 ),
-            )
-        ]
+            ),
+        )
     )
     output_file = tmp_path / "saved_config.yaml"
 
