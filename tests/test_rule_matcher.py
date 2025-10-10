@@ -3,8 +3,8 @@
 import pytest
 from pydantic import ValidationError
 
-from feedly_saved_entries_processor.feedly_client import Entry, Origin
-from feedly_saved_entries_processor.rule_matcher import AllMatcher, StreamIdInMatcher
+from feedly_entries_processor.feedly_client import Entry, Origin
+from feedly_entries_processor.rule_matcher import AllMatcher, StreamIdInMatcher
 
 
 @pytest.fixture

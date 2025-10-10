@@ -4,16 +4,16 @@ from pathlib import Path
 
 import pytest
 
-from feedly_saved_entries_processor.config_loader import (
+from feedly_entries_processor.config_loader import (
     Config,
     Rule,
     load_config,
     save_config,
 )
-from feedly_saved_entries_processor.entry_processors.log_entry_processor import (
+from feedly_entries_processor.entry_processors.log_entry_processor import (
     LogEntryProcessor,
 )
-from feedly_saved_entries_processor.rule_matcher import AllMatcher, StreamIdInMatcher
+from feedly_entries_processor.rule_matcher import AllMatcher, StreamIdInMatcher
 
 
 @pytest.fixture

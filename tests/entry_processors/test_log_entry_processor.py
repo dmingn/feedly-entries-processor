@@ -7,17 +7,17 @@ import pytest
 from pydantic import ValidationError
 from pytest_mock import MockerFixture
 
-from feedly_saved_entries_processor.entry_processors.log_entry_processor import (
+from feedly_entries_processor.entry_processors.log_entry_processor import (
     LogEntryProcessor,
 )
-from feedly_saved_entries_processor.feedly_client import Entry
+from feedly_entries_processor.feedly_client import Entry
 
 
 @pytest.fixture
 def mock_logger(mocker: MockerFixture) -> MagicMock:
     """Mock the logzero logger."""
     return mocker.patch(
-        "feedly_saved_entries_processor.entry_processors.log_entry_processor.logger"
+        "feedly_entries_processor.entry_processors.log_entry_processor.logger"
     )
 
 

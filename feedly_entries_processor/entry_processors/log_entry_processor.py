@@ -4,10 +4,10 @@ from typing import Literal, assert_never
 
 from logzero import logger
 
-from feedly_saved_entries_processor.entry_processors.base_entry_processor import (
+from feedly_entries_processor.entry_processors.base_entry_processor import (
     BaseEntryProcessor,
 )
-from feedly_saved_entries_processor.feedly_client import Entry
+from feedly_entries_processor.feedly_client import Entry
 
 
 class LogEntryProcessor(BaseEntryProcessor):

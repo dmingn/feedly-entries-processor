@@ -5,12 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from feedly_saved_entries_processor.feedly_client import (
-    Entry,
-    FeedlyClient,
-    Origin,
-    Summary,
-)
+from feedly_entries_processor.feedly_client import Entry, FeedlyClient, Origin, Summary
 
 
 @pytest.fixture
@@ -165,7 +160,7 @@ def test_fetch_saved_entries_calls_fetch_entries(
 ) -> None:
     """Test that fetch_saved_entries calls fetch_entries with the correct stream_id."""
     mock_fetch_entries = mocker.patch(
-        "feedly_saved_entries_processor.feedly_client.FeedlyClient.fetch_entries"
+        "feedly_entries_processor.feedly_client.FeedlyClient.fetch_entries"
     )
 
     client = FeedlyClient(mock_feedly_session)
