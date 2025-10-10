@@ -9,8 +9,8 @@ import typer
 from feedly.api_client.session import FeedlySession, FileAuthStore
 from logzero import logger
 
-from feedly_saved_entries_processor.config_loader import Config, Rule, load_config
-from feedly_saved_entries_processor.feedly_client import Entry, FeedlyClient
+from feedly_entries_processor.config_loader import Config, Rule, load_config
+from feedly_entries_processor.feedly_client import Entry, FeedlyClient
 
 app = typer.Typer()
 
@@ -52,7 +52,7 @@ def process(
         typer.Option(exists=True, file_okay=False),
     ] = None,
 ) -> None:
-    """Process saved entries."""
+    """Process entries."""
     if token_dir is None:
         token_dir = Path.home() / ".config" / "feedly"
 

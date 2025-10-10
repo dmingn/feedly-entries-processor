@@ -5,7 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-from feedly_saved_entries_processor.feedly_client import Entry
+from feedly_entries_processor.feedly_client import Entry
 
 
 class BaseMatcher(ABC, BaseModel):

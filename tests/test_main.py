@@ -9,13 +9,13 @@ import pytest
 from pytest_mock import MockerFixture
 from typer.testing import CliRunner
 
-from feedly_saved_entries_processor.__main__ import app, process_entries, process_entry
-from feedly_saved_entries_processor.config_loader import Config, Rule
-from feedly_saved_entries_processor.entry_processors.log_entry_processor import (
+from feedly_entries_processor.__main__ import app, process_entries, process_entry
+from feedly_entries_processor.config_loader import Config, Rule
+from feedly_entries_processor.entry_processors.log_entry_processor import (
     LogEntryProcessor,
 )
-from feedly_saved_entries_processor.feedly_client import Entry
-from feedly_saved_entries_processor.rule_matcher import AllMatcher
+from feedly_entries_processor.feedly_client import Entry
+from feedly_entries_processor.rule_matcher import AllMatcher
 
 runner = CliRunner()
 
@@ -126,9 +126,7 @@ def test_process_entries_calls_process_entry_for_each_entry_and_rule(
     mocker: MockerFixture,
 ) -> None:
     """Test that process_entries calls process_entry for each entry and rule."""
-    mock_process_entry = mocker.patch(
-        "feedly_saved_entries_processor.__main__.process_entry"
-    )
+    mock_process_entry = mocker.patch("feedly_entries_processor.__main__.process_entry")
     entry1, entry2 = MagicMock(spec=Entry), MagicMock(spec=Entry)
     rule1, rule2 = MagicMock(spec=Rule), MagicMock(spec=Rule)
     entries = [entry1, entry2]
@@ -150,7 +148,7 @@ def mock_load_config(mocker: MockerFixture, mock_rule: Rule) -> MagicMock:
     """Fixture to mock load_config."""
     config = Config(rules=(mock_rule,))
     return mocker.patch(
-        "feedly_saved_entries_processor.__main__.load_config", return_value=config
+        "feedly_entries_processor.__main__.load_config", return_value=config
     )
 
 
@@ -160,7 +158,7 @@ def mock_feedly_client(mocker: MockerFixture, mock_entry: Entry) -> MagicMock:
     mock_client = mocker.MagicMock()
     mock_client.fetch_saved_entries.return_value = [mock_entry]
     return mocker.patch(
-        "feedly_saved_entries_processor.__main__.FeedlyClient",
+        "feedly_entries_processor.__main__.FeedlyClient",
         return_value=mock_client,
     )
 
@@ -173,10 +171,10 @@ def test_process_command(
     mock_load_config: MagicMock,
 ) -> None:
     """Test the process command."""
-    mocker.patch("feedly_saved_entries_processor.__main__.FileAuthStore")
-    mocker.patch("feedly_saved_entries_processor.__main__.FeedlySession")
+    mocker.patch("feedly_entries_processor.__main__.FileAuthStore")
+    mocker.patch("feedly_entries_processor.__main__.FeedlySession")
     mock_process_entries = mocker.patch(
-        "feedly_saved_entries_processor.__main__.process_entries"
+        "feedly_entries_processor.__main__.process_entries"
     )
 
     config_file = tmp_path / "config.yml"

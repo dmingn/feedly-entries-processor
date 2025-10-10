@@ -1,5 +1,5 @@
 [project]
-name = "feedly-saved-entries-processor"
+name = "feedly-entries-processor"
 version = "2025.08.03.0"
 description = ""
 authors = [
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-feedly-saved-entries-processor = "feedly_saved_entries_processor.__main__:app"
+feedly-entries-processor = "feedly_entries_processor.__main__:app"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

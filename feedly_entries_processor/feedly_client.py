@@ -1,4 +1,4 @@
-"""Feedly client for fetching saved entries."""
+"""Feedly client for fetching entries."""
 
 from collections.abc import Generator
 
@@ -61,7 +61,7 @@ class StreamContents(BaseModel):
 
 
 class FeedlyClient:
-    """Feedly client for fetching saved entries."""
+    """Feedly client for fetching entries."""
 
     def __init__(self, feedly_session: FeedlySession) -> None:
         self.feedly_session = feedly_session
