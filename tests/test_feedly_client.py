@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from pytest_mock import MockerFixture
 
 from feedly_saved_entries_processor.feedly_client import (
     Entry,
@@ -20,8 +21,8 @@ def mock_feedly_session() -> MagicMock:
     return session
 
 
-def test_fetch_saved_entries_single_page(mock_feedly_session: MagicMock) -> None:
-    """Test fetching saved entries with a single page of results."""
+def test_fetch_entries_single_page(mock_feedly_session: MagicMock) -> None:
+    """Test fetching entries with a single page of results."""
     mock_feedly_session.do_api_request.return_value = {
         "items": [
             {
@@ -55,7 +56,8 @@ def test_fetch_saved_entries_single_page(mock_feedly_session: MagicMock) -> None
     }
 
     client = FeedlyClient(mock_feedly_session)
-    entries = list(client.fetch_saved_entries())
+    stream_id = "dummy_stream_id"
+    entries = list(client.fetch_entries(stream_id))
 
     expected_entries = [
         Entry(
@@ -90,15 +92,15 @@ def test_fetch_saved_entries_single_page(mock_feedly_session: MagicMock) -> None
     mock_feedly_session.do_api_request.assert_called_once_with(
         relative_url="/v3/streams/contents",
         params={
-            "streamId": "user/test_user_id/tag/global.saved",
+            "streamId": stream_id,
             "count": "1000",
             "ranked": "oldest",
         },
     )
 
 
-def test_fetch_saved_entries_multiple_pages(mock_feedly_session: MagicMock) -> None:
-    """Test fetching saved entries with multiple pages of results."""
+def test_fetch_entries_multiple_pages(mock_feedly_session: MagicMock) -> None:
+    """Test fetching entries with multiple pages of results."""
     mock_feedly_session.do_api_request.side_effect = [
         # First page
         {
@@ -113,7 +115,8 @@ def test_fetch_saved_entries_multiple_pages(mock_feedly_session: MagicMock) -> N
     ]
 
     client = FeedlyClient(mock_feedly_session)
-    entries = list(client.fetch_saved_entries())
+    stream_id = "dummy_stream_id"
+    entries = list(client.fetch_entries(stream_id))
 
     assert len(entries) == 4
     assert entries[0].id == "entry1"
@@ -125,7 +128,7 @@ def test_fetch_saved_entries_multiple_pages(mock_feedly_session: MagicMock) -> N
     mock_feedly_session.do_api_request.assert_any_call(
         relative_url="/v3/streams/contents",
         params={
-            "streamId": "user/test_user_id/tag/global.saved",
+            "streamId": stream_id,
             "count": "1000",
             "ranked": "oldest",
         },
@@ -133,7 +136,7 @@ def test_fetch_saved_entries_multiple_pages(mock_feedly_session: MagicMock) -> N
     mock_feedly_session.do_api_request.assert_any_call(
         relative_url="/v3/streams/contents",
         params={
-            "streamId": "user/test_user_id/tag/global.saved",
+            "streamId": stream_id,
             "count": "1000",
             "ranked": "oldest",
             "continuation": "continuation1",
@@ -142,15 +145,32 @@ def test_fetch_saved_entries_multiple_pages(mock_feedly_session: MagicMock) -> N
     assert mock_feedly_session.do_api_request.call_count == 2
 
 
-def test_fetch_saved_entries_no_entries(mock_feedly_session: MagicMock) -> None:
-    """Test fetching saved entries when no entries are returned."""
+def test_fetch_entries_no_entries(mock_feedly_session: MagicMock) -> None:
+    """Test fetching entries when no entries are returned."""
     mock_feedly_session.do_api_request.return_value = {
         "items": [],
         "continuation": None,
     }
 
     client = FeedlyClient(mock_feedly_session)
-    entries = list(client.fetch_saved_entries())
+    stream_id = "dummy_stream_id"
+    entries = list(client.fetch_entries(stream_id))
 
     assert len(entries) == 0
     mock_feedly_session.do_api_request.assert_called_once()
+
+
+def test_fetch_saved_entries_calls_fetch_entries(
+    mock_feedly_session: MagicMock, mocker: MockerFixture
+) -> None:
+    """Test that fetch_saved_entries calls fetch_entries with the correct stream_id."""
+    mock_fetch_entries = mocker.patch(
+        "feedly_saved_entries_processor.feedly_client.FeedlyClient.fetch_entries"
+    )
+
+    client = FeedlyClient(mock_feedly_session)
+    # list() is necessary to consume the generator
+    list(client.fetch_saved_entries())
+
+    expected_stream_id = f"user/{mock_feedly_session.user.id}/tag/global.saved"
+    mock_fetch_entries.assert_called_once_with(expected_stream_id)
