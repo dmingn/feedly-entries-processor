@@ -1,6 +1,7 @@
 """Configuration loading and validation for Feedly Saved Entries Processor."""
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from pydantic_yaml import parse_yaml_raw_as, to_yaml_str
@@ -19,6 +20,7 @@ class Rule(BaseModel):
     """Defines a single processing rule for Feedly entries."""
 
     name: str
+    source: Literal["saved"]
     match: AllMatcher | StreamIdInMatcher = Field(discriminator="matcher_name")
     processor: LogEntryProcessor | TodoistEntryProcessor = Field(
         discriminator="processor_name"

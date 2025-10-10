@@ -89,6 +89,7 @@ def test_save_config_and_load_back(tmp_path: Path) -> None:
         rules=(
             Rule(
                 name="Saved Rule",
+                source="saved",
                 match=StreamIdInMatcher(
                     matcher_name="stream_id_in", stream_ids=("feed/saved.com/1",)
                 ),

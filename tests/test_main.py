@@ -50,7 +50,9 @@ def mock_processor(mocker: MockerFixture) -> LogEntryProcessor:
 @pytest.fixture
 def mock_rule(mock_matcher: AllMatcher, mock_processor: LogEntryProcessor) -> Rule:
     """Fixture for a mock Rule."""
-    return Rule(name="test-rule", match=mock_matcher, processor=mock_processor)
+    return Rule(
+        name="test-rule", source="saved", match=mock_matcher, processor=mock_processor
+    )
 
 
 def test_process_entry_calls_processor_when_rule_matches(
