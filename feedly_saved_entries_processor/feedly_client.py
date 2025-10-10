@@ -66,18 +66,20 @@ class FeedlyClient:
     def __init__(self, feedly_session: FeedlySession) -> None:
         self.feedly_session = feedly_session
 
-    def fetch_saved_entries(self) -> Generator[Entry]:
-        """Fetch saved entries from Feedly."""
+    def fetch_entries(self, stream_id: str) -> Generator[Entry]:
+        """Fetch entries from a stream."""
         continuation = None
 
         while True:
-            logger.debug(f"Fetching saved entries with continuation: {continuation}")
+            logger.debug(
+                f"Fetching entries from stream {stream_id} with continuation: {continuation}"
+            )
             stream_contents = StreamContents.model_validate(
                 self.feedly_session.do_api_request(
                     relative_url="/v3/streams/contents",
                     params=(
                         {
-                            "streamId": f"user/{self.feedly_session.user.id}/tag/global.saved",
+                            "streamId": stream_id,
                             "count": "1000",
                             "ranked": "oldest",
                         }
@@ -94,3 +96,9 @@ class FeedlyClient:
                 break
 
             continuation = stream_contents.continuation
+
+    def fetch_saved_entries(self) -> Generator[Entry]:
+        """Fetch saved entries from Feedly."""
+        yield from self.fetch_entries(
+            f"user/{self.feedly_session.user.id}/tag/global.saved"
+        )
