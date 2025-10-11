@@ -102,8 +102,11 @@ def load_config(paths: Iterable[FilePath | DirectoryPath]) -> Config:
         if path.is_file():
             config |= load_config_file(path)
         elif path.is_dir():
-            for pattern in ("*.yml", "*.yaml"):
-                for file_path in path.glob(pattern):
+            for file_path in path.iterdir():
+                if file_path.is_file() and file_path.suffix.lower() in {
+                    ".yml",
+                    ".yaml",
+                }:
                     config |= load_config_file(file_path)
 
     return config
