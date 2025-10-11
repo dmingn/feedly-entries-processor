@@ -34,6 +34,21 @@ class Config(BaseModel):
     rules: frozenset[Rule]
     model_config = ConfigDict(frozen=True)
 
+    def __or__(self, other: "Config") -> "Config":
+        """Combine two Config objects, merging their rules.
+
+        Args:
+            other: Another Config object to combine with.
+
+        Returns
+        -------
+            A new Config object containing all unique rules from both original Config objects.
+        """
+        if not isinstance(other, Config):
+            return NotImplemented
+
+        return Config(rules=self.rules | other.rules)
+
 
 def load_config(file_path: Path) -> Config:
     """Load and validate the configuration from a YAML file.

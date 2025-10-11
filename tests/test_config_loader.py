@@ -111,3 +111,48 @@ def test_save_config_and_load_back(tmp_path: Path) -> None:
     loaded_config = load_config(output_file)
 
     assert loaded_config == original_config
+
+
+def test_config_or_operator() -> None:
+    """Test the | operator for combining two Config objects."""
+    rule1 = Rule(
+        name="Rule 1",
+        source="saved",
+        match=AllMatcher(matcher_name="all"),
+        processor=LogEntryProcessor(processor_name="log", level="info"),
+    )
+    rule2 = Rule(
+        name="Rule 2",
+        source="saved",
+        match=StreamIdInMatcher(
+            matcher_name="stream_id_in", stream_ids=("feed/test.com/1",)
+        ),
+        processor=LogEntryProcessor(processor_name="log", level="debug"),
+    )
+    common_rule = Rule(
+        name="Common Rule",
+        source="saved",
+        match=AllMatcher(matcher_name="all"),
+        processor=LogEntryProcessor(processor_name="log", level="warning"),
+    )
+
+    config1 = Config(rules=frozenset([rule1]))
+    config2 = Config(rules=frozenset([rule2]))
+    config1_with_common = Config(rules=frozenset([rule1, common_rule]))
+    config2_with_common = Config(rules=frozenset([rule2, common_rule]))
+
+    # Test combining two disjoint configs
+    combined_config = config1 | config2
+    assert combined_config.rules == frozenset([rule1, rule2])
+
+    # Test combining two configs with a common rule
+    combined_config_with_common = config1_with_common | config2_with_common
+    assert combined_config_with_common.rules == frozenset([rule1, rule2, common_rule])
+
+    # Test that the original configs are not modified
+    assert config1.rules == frozenset([rule1])
+    assert config2.rules == frozenset([rule2])
+
+    # Test combining with a non-Config object
+    with pytest.raises(TypeError):
+        config1 | "not a config"  # type: ignore[operator]
