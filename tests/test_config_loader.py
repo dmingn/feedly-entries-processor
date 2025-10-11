@@ -45,23 +45,27 @@ def test_load_config_success(valid_config_file: Path) -> None:
     config = load_config(valid_config_file)
 
     assert isinstance(config, Config)
-    assert len(config.rules) == 2
-
-    rule1 = config.rules[0]
-    assert rule1.name == "Log Rule for Stream ID"
-    assert isinstance(rule1.match, StreamIdInMatcher)
-    assert rule1.match.stream_ids == ("feed/test.com/3",)
-    assert isinstance(rule1.processor, LogEntryProcessor)
-    assert rule1.processor.processor_name == "log"
-    assert rule1.processor.level == "info"
-
-    rule2 = config.rules[1]
-    assert rule2.name == "Log Rule for All Matcher"
-    assert isinstance(rule2.match, AllMatcher)
-    assert rule2.match.matcher_name == "all"
-    assert isinstance(rule2.processor, LogEntryProcessor)
-    assert rule2.processor.processor_name == "log"
-    assert rule2.processor.level == "debug"
+    expected_config = Config(
+        rules=frozenset(
+            (
+                Rule(
+                    name="Log Rule for Stream ID",
+                    source="saved",
+                    match=StreamIdInMatcher(
+                        matcher_name="stream_id_in", stream_ids=("feed/test.com/3",)
+                    ),
+                    processor=LogEntryProcessor(processor_name="log", level="info"),
+                ),
+                Rule(
+                    name="Log Rule for All Matcher",
+                    source="saved",
+                    match=AllMatcher(matcher_name="all"),
+                    processor=LogEntryProcessor(processor_name="log", level="debug"),
+                ),
+            )
+        )
+    )
+    assert config == expected_config
 
 
 def test_load_config_file_not_found(tmp_path: Path) -> None:

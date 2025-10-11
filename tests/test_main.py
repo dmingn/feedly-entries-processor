@@ -146,7 +146,7 @@ def test_process_entries_calls_process_entry_for_each_entry_and_rule(
 @pytest.fixture
 def mock_load_config(mocker: MockerFixture, mock_rule: Rule) -> MagicMock:
     """Fixture to mock load_config."""
-    config = Config(rules=(mock_rule,))
+    config = Config(rules=frozenset((mock_rule,)))
     return mocker.patch(
         "feedly_entries_processor.__main__.load_config", return_value=config
     )
