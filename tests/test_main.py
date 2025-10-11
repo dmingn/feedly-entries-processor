@@ -144,11 +144,11 @@ def test_process_entries_calls_process_entry_for_each_entry_and_rule(
 
 
 @pytest.fixture
-def mock_load_config_file(mocker: MockerFixture, mock_rule: Rule) -> MagicMock:
+def mock_load_config(mocker: MockerFixture, mock_rule: Rule) -> MagicMock:
     """Fixture to mock load_config."""
     config = Config(rules=frozenset({mock_rule}))
     return mocker.patch(
-        "feedly_entries_processor.__main__.load_config_file", return_value=config
+        "feedly_entries_processor.__main__.load_config", return_value=config
     )
 
 
@@ -168,7 +168,7 @@ def test_process_command(
     mocker: MockerFixture,
     tmp_path: Path,
     mock_entry: Entry,
-    mock_load_config_file: MagicMock,
+    mock_load_config: MagicMock,
 ) -> None:
     """Test the process command."""
     mocker.patch("feedly_entries_processor.__main__.FileAuthStore")
@@ -186,7 +186,6 @@ def test_process_command(
         app,
         [
             "process",
-            "--config-file",
             str(config_file),
             "--token-dir",
             str(token_dir),
@@ -195,8 +194,8 @@ def test_process_command(
 
     assert result.exit_code == 0, result.output
 
-    mock_load_config_file.assert_called_once_with(config_file)
-    mock_config = mock_load_config_file.return_value
+    mock_load_config.assert_called_once_with([config_file])
+    mock_config = mock_load_config.return_value
     mock_process_entries.assert_called_once_with(
         entries=[mock_entry], rules=mock_config.rules
     )
