@@ -11,11 +11,9 @@ from typer.testing import CliRunner
 
 from feedly_entries_processor.__main__ import app, process_entries, process_entry
 from feedly_entries_processor.config_loader import Config, Rule
-from feedly_entries_processor.entry_processors.log_entry_processor import (
-    LogEntryProcessor,
-)
+from feedly_entries_processor.entry_processors import LogEntryProcessor
 from feedly_entries_processor.feedly_client import Entry
-from feedly_entries_processor.rule_matcher import AllMatcher
+from feedly_entries_processor.matchers import AllMatcher
 
 runner = CliRunner()
 

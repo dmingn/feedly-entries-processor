@@ -1,51 +1,12 @@
-"""Tests for the rule_matcher module."""
+"""Tests for the StreamIdInMatcher."""
 
 import pytest
 from pydantic import ValidationError
 
-from feedly_entries_processor.feedly_client import Entry, Origin
-from feedly_entries_processor.rule_matcher import AllMatcher, StreamIdInMatcher
+from feedly_entries_processor.feedly_client import Entry
+from feedly_entries_processor.matchers import StreamIdInMatcher
 
 
-@pytest.fixture
-def mock_entry_with_origin() -> Entry:
-    """Provide a mock Entry object with origin and stream_id."""
-    return Entry(
-        id="entry1",
-        title="Test Entry",
-        origin=Origin(
-            html_url="http://example.com",
-            stream_id="feed/test.com/1",
-            title="Test Feed",
-        ),
-    )
-
-
-@pytest.fixture
-def mock_entry_without_origin() -> Entry:
-    """Provide a mock Entry object without origin."""
-    return Entry(
-        id="entry2",
-        title="Another Entry",
-        origin=None,
-    )
-
-
-# Tests for AllMatcher
-def test_all_matcher_is_match(mock_entry_with_origin: Entry) -> None:
-    """Test that AllMatcher always returns True."""
-    matcher = AllMatcher(matcher_name="all")
-    assert matcher.is_match(mock_entry_with_origin) is True
-
-
-def test_all_matcher_pydantic_instantiation() -> None:
-    """Test that AllMatcher can be instantiated correctly by Pydantic."""
-    matcher = AllMatcher.model_validate({"matcher_name": "all"})
-    assert isinstance(matcher, AllMatcher)
-    assert matcher.matcher_name == "all"
-
-
-# Tests for StreamIdInMatcher
 def test_stream_id_in_matcher_is_match_with_origin(
     mock_entry_with_origin: Entry,
 ) -> None:

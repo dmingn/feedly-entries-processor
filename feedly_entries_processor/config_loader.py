@@ -13,13 +13,8 @@ from pydantic import (
 )
 from pydantic_yaml import parse_yaml_raw_as
 
-from feedly_entries_processor.entry_processors.log_entry_processor import (
-    LogEntryProcessor,
-)
-from feedly_entries_processor.entry_processors.todoist_entry_processor import (
-    TodoistEntryProcessor,
-)
-from feedly_entries_processor.rule_matcher import AllMatcher, StreamIdInMatcher
+from feedly_entries_processor.entry_processors import EntryProcessor
+from feedly_entries_processor.matchers import Matcher
 
 
 class Rule(BaseModel):
@@ -27,10 +22,8 @@ class Rule(BaseModel):
 
     name: str
     source: Literal["saved"]
-    match: AllMatcher | StreamIdInMatcher = Field(discriminator="matcher_name")
-    processor: LogEntryProcessor | TodoistEntryProcessor = Field(
-        discriminator="processor_name"
-    )
+    match: Matcher = Field(discriminator="matcher_name")
+    processor: EntryProcessor = Field(discriminator="processor_name")
     model_config = ConfigDict(frozen=True)
 
 

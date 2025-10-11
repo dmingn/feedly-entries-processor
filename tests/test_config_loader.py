@@ -13,10 +13,8 @@ from feedly_entries_processor.config_loader import (
     load_config,
     load_config_file,
 )
-from feedly_entries_processor.entry_processors.log_entry_processor import (
-    LogEntryProcessor,
-)
-from feedly_entries_processor.rule_matcher import AllMatcher, StreamIdInMatcher
+from feedly_entries_processor.entry_processors import LogEntryProcessor
+from feedly_entries_processor.matchers import AllMatcher, StreamIdInMatcher
 
 
 def _save_config(config: Config, file_path: Path) -> None:
