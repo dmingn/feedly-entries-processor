@@ -49,7 +49,7 @@ class Config(BaseModel):
 
 
 @validate_call
-def load_config(file_path: FilePath) -> Config:
+def load_config_file(file_path: FilePath) -> Config:
     """Load and validate the configuration from a YAML file.
 
     Args:

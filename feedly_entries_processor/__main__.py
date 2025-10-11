@@ -9,7 +9,7 @@ import typer
 from feedly.api_client.session import FeedlySession, FileAuthStore
 from logzero import logger
 
-from feedly_entries_processor.config_loader import Config, Rule, load_config
+from feedly_entries_processor.config_loader import Config, Rule, load_config_file
 from feedly_entries_processor.feedly_client import Entry, FeedlyClient
 
 app = typer.Typer()
@@ -56,7 +56,7 @@ def process(
     if token_dir is None:
         token_dir = Path.home() / ".config" / "feedly"
 
-    config = load_config(config_file)
+    config = load_config_file(config_file)
     logger.info(f"Loaded {len(config.rules)} rules from {config_file}")
 
     auth = FileAuthStore(token_dir=token_dir)
