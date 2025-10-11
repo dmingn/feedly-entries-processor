@@ -3,17 +3,23 @@
 from pathlib import Path
 
 import pytest
+from pydantic_yaml import to_yaml_str
 
-from feedly_entries_processor.config_loader import (
-    Config,
-    Rule,
-    load_config,
-    save_config,
-)
+from feedly_entries_processor.config_loader import Config, Rule, load_config
 from feedly_entries_processor.entry_processors.log_entry_processor import (
     LogEntryProcessor,
 )
 from feedly_entries_processor.rule_matcher import AllMatcher, StreamIdInMatcher
+
+
+def _save_config(config: Config, file_path: Path) -> None:
+    """Save the configuration to a YAML file.
+
+    Args:
+        config: The Config object to save.
+        file_path: The path to the YAML file where the configuration will be saved.
+    """
+    file_path.write_text(to_yaml_str(config), encoding="utf-8")
 
 
 @pytest.fixture
@@ -106,7 +112,7 @@ def test_save_config_and_load_back(tmp_path: Path) -> None:
     )
     output_file = tmp_path / "saved_config.yaml"
 
-    save_config(original_config, output_file)
+    _save_config(original_config, output_file)
 
     loaded_config = load_config(output_file)
 
