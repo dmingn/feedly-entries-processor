@@ -63,7 +63,7 @@ def process(
     feedly_session = FeedlySession(auth=auth)
     client = FeedlyClient(feedly_session=feedly_session)
 
-    rules_for_saved_entries = tuple(
+    rules_for_saved_entries = frozenset(
         rule for rule in config.rules if rule.source == "saved"
     )
     saved_entries = client.fetch_saved_entries()

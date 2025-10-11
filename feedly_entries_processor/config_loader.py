@@ -31,7 +31,7 @@ class Rule(BaseModel):
 class Config(BaseModel):
     """Overall configuration for the Feedly Entries Processor."""
 
-    rules: tuple[Rule, ...]
+    rules: frozenset[Rule]
     model_config = ConfigDict(frozen=True)
 
 
