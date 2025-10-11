@@ -1,11 +1,9 @@
 """Configuration loading and validation for Feedly Entries Processor."""
 
-from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, FilePath, validate_call
 from pydantic_yaml import parse_yaml_raw_as
-from ruamel.yaml.error import YAMLError
 
 from feedly_entries_processor.entry_processors.log_entry_processor import (
     LogEntryProcessor,
@@ -50,7 +48,8 @@ class Config(BaseModel):
         return Config(rules=self.rules | other.rules)
 
 
-def load_config(file_path: Path) -> Config:
+@validate_call
+def load_config(file_path: FilePath) -> Config:
     """Load and validate the configuration from a YAML file.
 
     Args:
@@ -62,16 +61,10 @@ def load_config(file_path: Path) -> Config:
 
     Raises
     ------
-        FileNotFoundError: If the configuration file does not exist.
-        ValueError: If there is an error parsing or validating the configuration file.
+        ValidationError: If the configuration file does not exist, or if there
+                         is a Pydantic validation error within the configuration.
+        YAMLError: If there is an error parsing the YAML content of the
+                    configuration file (e.g., malformed YAML).
     """
-    if not file_path.exists():
-        msg = f"Configuration file not found: {file_path}"
-        raise FileNotFoundError(msg)
-
-    try:
-        yaml_content = file_path.read_text(encoding="utf-8")
-        return parse_yaml_raw_as(Config, yaml_content)
-    except (YAMLError, ValidationError) as e:
-        msg = f"Error parsing configuration file {file_path}: {e}"
-        raise ValueError(msg) from e
+    yaml_content = file_path.read_text(encoding="utf-8")
+    return parse_yaml_raw_as(Config, yaml_content)
