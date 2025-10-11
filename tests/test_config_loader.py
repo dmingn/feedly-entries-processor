@@ -3,7 +3,9 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 from pydantic_yaml import to_yaml_str
+from ruamel.yaml.error import YAMLError
 
 from feedly_entries_processor.config_loader import Config, Rule, load_config
 from feedly_entries_processor.entry_processors.log_entry_processor import (
@@ -75,21 +77,21 @@ def test_load_config_success(valid_config_file: Path) -> None:
 
 
 def test_load_config_file_not_found(tmp_path: Path) -> None:
-    """Test that FileNotFoundError is raised for a non-existent file."""
+    """Test that ValidationError is raised for a non-existent file."""
     non_existent_file = tmp_path / "non_existent.yaml"
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(ValidationError):
         load_config(non_existent_file)
 
 
 def test_load_config_invalid_yaml(invalid_yaml_file: Path) -> None:
-    """Test that ValueError is raised for an invalid YAML file."""
-    with pytest.raises(ValueError, match="Error parsing configuration file"):
+    """Test that YAMLError is raised for an invalid YAML file."""
+    with pytest.raises(YAMLError):
         load_config(invalid_yaml_file)
 
 
 def test_load_config_invalid_schema(invalid_schema_file: Path) -> None:
-    """Test that ValueError is raised for a YAML file with invalid schema."""
-    with pytest.raises(ValueError, match="Error parsing configuration file"):
+    """Test that ValidationError is raised for a YAML file with invalid schema."""
+    with pytest.raises(ValidationError):
         load_config(invalid_schema_file)
 
 
