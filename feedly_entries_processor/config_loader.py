@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
-from pydantic_yaml import parse_yaml_raw_as, to_yaml_str
+from pydantic_yaml import parse_yaml_raw_as
 from ruamel.yaml.error import YAMLError
 
 from feedly_entries_processor.entry_processors.log_entry_processor import (
@@ -75,13 +75,3 @@ def load_config(file_path: Path) -> Config:
     except (YAMLError, ValidationError) as e:
         msg = f"Error parsing configuration file {file_path}: {e}"
         raise ValueError(msg) from e
-
-
-def save_config(config: Config, file_path: Path) -> None:
-    """Save the configuration to a YAML file.
-
-    Args:
-        config: The Config object to save.
-        file_path: The path to the YAML file where the configuration will be saved.
-    """
-    file_path.write_text(to_yaml_str(config), encoding="utf-8")
