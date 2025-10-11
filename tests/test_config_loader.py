@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from pydantic_yaml import to_yaml_str
 from ruamel.yaml.error import YAMLError
 
-from feedly_entries_processor.config_loader import Config, Rule, load_config
+from feedly_entries_processor.config_loader import Config, Rule, load_config_file
 from feedly_entries_processor.entry_processors.log_entry_processor import (
     LogEntryProcessor,
 )
@@ -48,9 +48,9 @@ def invalid_schema_file(test_configs_path: Path) -> Path:
     return test_configs_path / "invalid_schema.yaml"
 
 
-def test_load_config_success(valid_config_file: Path) -> None:
+def test_load_config_file_success(valid_config_file: Path) -> None:
     """Test that a valid configuration file can be loaded successfully."""
-    config = load_config(valid_config_file)
+    config = load_config_file(valid_config_file)
 
     assert isinstance(config, Config)
     expected_config = Config(
@@ -76,23 +76,23 @@ def test_load_config_success(valid_config_file: Path) -> None:
     assert config == expected_config
 
 
-def test_load_config_file_not_found(tmp_path: Path) -> None:
+def test_load_config_file_file_not_found(tmp_path: Path) -> None:
     """Test that ValidationError is raised for a non-existent file."""
     non_existent_file = tmp_path / "non_existent.yaml"
     with pytest.raises(ValidationError, match="Path does not point to a file"):
-        load_config(non_existent_file)
+        load_config_file(non_existent_file)
 
 
-def test_load_config_invalid_yaml(invalid_yaml_file: Path) -> None:
+def test_load_config_file_invalid_yaml(invalid_yaml_file: Path) -> None:
     """Test that YAMLError is raised for an invalid YAML file."""
     with pytest.raises(YAMLError):
-        load_config(invalid_yaml_file)
+        load_config_file(invalid_yaml_file)
 
 
-def test_load_config_invalid_schema(invalid_schema_file: Path) -> None:
+def test_load_config_file_invalid_schema(invalid_schema_file: Path) -> None:
     """Test that ValidationError is raised for a YAML file with invalid schema."""
     with pytest.raises(ValidationError, match="Field required"):
-        load_config(invalid_schema_file)
+        load_config_file(invalid_schema_file)
 
 
 def test_save_config_and_load_back(tmp_path: Path) -> None:
@@ -116,7 +116,7 @@ def test_save_config_and_load_back(tmp_path: Path) -> None:
 
     _save_config(original_config, output_file)
 
-    loaded_config = load_config(output_file)
+    loaded_config = load_config_file(output_file)
 
     assert loaded_config == original_config
 
