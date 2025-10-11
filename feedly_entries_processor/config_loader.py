@@ -45,7 +45,7 @@ class Config(BaseModel):
             A new Config object containing all unique rules from both original Config objects.
         """
         if not isinstance(other, Config):
-            raise NotImplementedError
+            return NotImplemented
 
         return Config(rules=self.rules | other.rules)
 

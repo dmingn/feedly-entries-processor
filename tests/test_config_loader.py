@@ -154,5 +154,5 @@ def test_config_or_operator() -> None:
     assert config2.rules == frozenset([rule2])
 
     # Test combining with a non-Config object
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(TypeError):
         config1 | "not a config"  # type: ignore[operator]
