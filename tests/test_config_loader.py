@@ -79,7 +79,7 @@ def test_load_config_success(valid_config_file: Path) -> None:
 def test_load_config_file_not_found(tmp_path: Path) -> None:
     """Test that ValidationError is raised for a non-existent file."""
     non_existent_file = tmp_path / "non_existent.yaml"
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="Path does not point to a file"):
         load_config(non_existent_file)
 
 
@@ -91,7 +91,7 @@ def test_load_config_invalid_yaml(invalid_yaml_file: Path) -> None:
 
 def test_load_config_invalid_schema(invalid_schema_file: Path) -> None:
     """Test that ValidationError is raised for a YAML file with invalid schema."""
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="Field required"):
         load_config(invalid_schema_file)
 
 
