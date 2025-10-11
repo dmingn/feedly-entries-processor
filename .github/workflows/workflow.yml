@@ -88,13 +88,16 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release with config schema
         if: steps.check_release.outputs.exists == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          poetry sync
+          poetry run python -m feedly_entries_processor.main show-config-schema > config_schema.json
           gh release create "${{ steps.get_version.outputs.release_version }}" \
-            --generate-notes
+            --generate-notes \
+            --asset config_schema.json#config_schema.json
 
   propose-version-update:
     runs-on: ubuntu-latest
