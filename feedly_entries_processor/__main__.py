@@ -8,6 +8,9 @@ from typing import Annotated
 import typer
 from feedly.api_client.session import FeedlySession, FileAuthStore
 from logzero import logger
+from pydantic import ValidationError
+from requests.exceptions import RequestException
+from ruamel.yaml.error import YAMLError
 
 from feedly_entries_processor.config_loader import Config, Rule, load_config
 from feedly_entries_processor.feedly_client import Entry, FeedlyClient
@@ -56,25 +59,49 @@ def process(
     if token_dir is None:
         token_dir = Path.home() / ".config" / "feedly"
 
-    config = load_config(config_files)
-    logger.info(f"Loaded {len(config.rules)} rules from {len(config_files)} sources")
+    try:
+        config = load_config(config_files)
+        logger.info(
+            f"Loaded {len(config.rules)} rules from {len(config_files)} sources"
+        )
+    except (YAMLError, ValidationError):
+        logger.exception("Failed to load configuration.")
+        raise typer.Exit(code=1) from None
 
-    auth = FileAuthStore(token_dir=token_dir)
-    feedly_session = FeedlySession(auth=auth)
-    client = FeedlyClient(feedly_session=feedly_session)
+    try:
+        auth = FileAuthStore(token_dir=token_dir)
+        feedly_session = FeedlySession(auth=auth)
+        client = FeedlyClient(feedly_session=feedly_session)
+    except (RequestException, ValidationError):
+        logger.exception("Failed to initialize Feedly client.")
+        raise typer.Exit(code=1) from None
 
     rules_for_saved_entries = frozenset(
         rule for rule in config.rules if rule.source == "saved"
     )
-    saved_entries = client.fetch_saved_entries()
+    try:
+        saved_entries = client.fetch_saved_entries()
+    except (RequestException, ValidationError):
+        logger.exception("Failed to fetch saved entries.")
+        raise typer.Exit(code=1) from None
     process_entries(entries=saved_entries, rules=rules_for_saved_entries)
 
 
 @app.command()
 def show_config_schema() -> None:
     """Show the JSON schema for the configuration file."""
-    typer.echo(json.dumps(Config.model_json_schema(), indent=2))
+    try:
+        typer.echo(json.dumps(Config.model_json_schema(), indent=2))
+    except TypeError:
+        logger.exception("Failed to generate JSON schema for the configuration.")
+        raise typer.Exit(code=1) from None
 
 
 if __name__ == "__main__":
-    app()
+    try:
+        app()
+    except typer.Exit:
+        raise
+    except Exception:  # noqa: BLE001
+        logger.exception("An unexpected error occurred.")
+        raise typer.Exit(code=1) from None
