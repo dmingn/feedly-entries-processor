@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Annotated
 
+import logzero
 import typer
 from feedly.api_client.session import FeedlySession, FileAuthStore
 from logzero import logger
@@ -16,6 +17,19 @@ from feedly_entries_processor.config_loader import Config, Rule, load_config
 from feedly_entries_processor.feedly_client import Entry, FeedlyClient
 
 app = typer.Typer()
+
+
+@app.callback()
+def main(
+    *,
+    json_log: Annotated[
+        bool,
+        typer.Option(help="Output logs in JSON format."),
+    ] = False,
+) -> None:
+    """A CLI application to process Feedly entries."""  # noqa: D401
+    if json_log:
+        logzero.json()
 
 
 def process_entry(entry: Entry, rule: Rule) -> None:
