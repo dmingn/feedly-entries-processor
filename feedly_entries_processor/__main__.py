@@ -18,12 +18,13 @@ app = typer.Typer()
 
 @app.callback()
 def main(
+    *,
     json_log: Annotated[
         bool,
         typer.Option(help="Output logs in JSON format."),
     ] = False,
 ) -> None:
-    """A CLI application to process Feedly entries."""
+    """A CLI application to process Feedly entries."""  # noqa: D401
     if json_log:
         logzero.json()
 
