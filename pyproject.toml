@@ -1,6 +1,6 @@
 [project]
 name = "feedly-entries-processor"
-version = "2025.08.03.0"
+version = "2025.10.24.0"
 description = ""
 authors = [
     {name = "dmingn",email = "dmingn@users.noreply.github.com"}
