@@ -19,12 +19,35 @@ from feedly_entries_processor.feedly_client import Entry, FeedlyClient
 app = typer.Typer()
 
 
+def show_config_schema_callback(*, value: bool) -> None:
+    """Callback for the --show-config-schema option."""  # noqa: D401
+    if not value:
+        return
+
+    try:
+        typer.echo(json.dumps(Config.model_json_schema(), indent=2))
+    except TypeError:
+        logger.exception("Failed to generate JSON schema for the configuration.")
+        raise typer.Exit(code=1) from None
+
+    raise typer.Exit
+
+
 @app.callback()
 def main(
     *,
     json_log: Annotated[
         bool,
         typer.Option(help="Output logs in JSON format."),
+    ] = False,
+    show_config_schema_flag: Annotated[  # noqa: ARG001
+        bool,
+        typer.Option(
+            "--show-config-schema",
+            help="Show the JSON schema for the configuration file and exit.",
+            is_eager=True,
+            callback=show_config_schema_callback,
+        ),
     ] = False,
 ) -> None:
     """A CLI application to process Feedly entries."""  # noqa: D401
@@ -99,16 +122,6 @@ def process(
         logger.exception("Failed to fetch saved entries.")
         raise typer.Exit(code=1) from None
     process_entries(entries=saved_entries, rules=rules_for_saved_entries)
-
-
-@app.command()
-def show_config_schema() -> None:
-    """Show the JSON schema for the configuration file."""
-    try:
-        typer.echo(json.dumps(Config.model_json_schema(), indent=2))
-    except TypeError:
-        logger.exception("Failed to generate JSON schema for the configuration.")
-        raise typer.Exit(code=1) from None
 
 
 if __name__ == "__main__":
