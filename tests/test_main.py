@@ -199,9 +199,9 @@ def test_process_command(
     )
 
 
-def test_show_config_schema_command() -> None:
-    """Test the show-config-schema command."""
-    result = runner.invoke(app, ["show-config-schema"])
+def test_show_config_schema_option() -> None:
+    """Test the --show-config-schema option."""
+    result = runner.invoke(app, ["--show-config-schema"])
 
     assert result.exit_code == 0
     assert json.loads(result.stdout) == Config.model_json_schema()
