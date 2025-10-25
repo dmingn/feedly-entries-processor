@@ -9,11 +9,7 @@ import typer
 from logzero import logger
 
 from feedly_entries_processor.config_loader import Config
-from feedly_entries_processor.exceptions import (
-    ConfigError,
-    FeedlyClientInitError,
-    FetchEntriesError,
-)
+from feedly_entries_processor.exceptions import FeedlyEntriesProcessorError
 from feedly_entries_processor.process import process
 
 app = typer.Typer()
@@ -67,7 +63,7 @@ def main(
 
     try:
         process(config_files=config_files, token_dir=token_dir)
-    except (ConfigError, FeedlyClientInitError, FetchEntriesError):
+    except FeedlyEntriesProcessorError:
         raise typer.Exit(code=1) from None
 
 

@@ -1,13 +1,17 @@
 """Custom exceptions for the application."""
 
 
-class ConfigError(Exception):
+class FeedlyEntriesProcessorError(Exception):
+    """Base exception for the application."""
+
+
+class ConfigError(FeedlyEntriesProcessorError):
     """Raised when there is an error loading the configuration."""
 
 
-class FeedlyClientInitError(Exception):
+class FeedlyClientInitError(FeedlyEntriesProcessorError):
     """Raised when there is an error initializing the Feedly client."""
 
 
-class FetchEntriesError(Exception):
+class FetchEntriesError(FeedlyEntriesProcessorError):
     """Raised when there is an error fetching entries from Feedly."""
