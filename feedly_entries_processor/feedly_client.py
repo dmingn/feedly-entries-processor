@@ -4,8 +4,11 @@ from collections.abc import Generator
 
 from feedly.api_client.session import FeedlySession
 from logzero import logger
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, ValidationError
 from pydantic.alias_generators import to_camel
+from requests.exceptions import RequestException
+
+from feedly_entries_processor.exceptions import FetchEntriesError
 
 
 class Summary(BaseModel):
@@ -67,26 +70,44 @@ class FeedlyClient:
         self.feedly_session = feedly_session
 
     def fetch_entries(self, stream_id: str) -> Generator[Entry]:
-        """Fetch entries from a stream."""
+        """Fetch entries from a stream.
+
+        Parameters
+        ----------
+            stream_id: The ID of the stream to fetch entries from.
+
+        Yields
+        ------
+            An iterator of Entry objects.
+
+        Raises
+        ------
+            FetchEntriesError: If there is an error fetching entries from Feedly.
+        """
         continuation = None
 
         while True:
             logger.debug(
                 f"Fetching entries from stream {stream_id} with continuation: {continuation}"
             )
-            stream_contents = StreamContents.model_validate(
-                self.feedly_session.do_api_request(
-                    relative_url="/v3/streams/contents",
-                    params=(
-                        {
-                            "streamId": stream_id,
-                            "count": "1000",
-                            "ranked": "oldest",
-                        }
-                        | ({"continuation": continuation} if continuation else {})
+            try:
+                stream_contents = StreamContents.model_validate(
+                    self.feedly_session.do_api_request(
+                        relative_url="/v3/streams/contents",
+                        params=(
+                            {
+                                "streamId": stream_id,
+                                "count": "1000",
+                                "ranked": "oldest",
+                            }
+                            | ({"continuation": continuation} if continuation else {})
+                        ),
                     ),
-                ),
-            )
+                )
+            except (RequestException, ValidationError) as e:
+                msg = f"Failed to fetch entries from stream {stream_id}."
+                raise FetchEntriesError(msg) from e
+
             logger.debug(f"Fetched {len(stream_contents.items)} entries.")
 
             yield from stream_contents.items
