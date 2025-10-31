@@ -7,11 +7,9 @@ from feedly.api_client.session import FeedlySession, FileAuthStore
 from logzero import logger
 from pydantic import ValidationError
 from requests.exceptions import RequestException
-from ruamel.yaml.error import YAMLError
 
 from feedly_entries_processor.config_loader import Rule, load_config
 from feedly_entries_processor.exceptions import (
-    ConfigError,
     FeedlyClientInitError,
     FetchEntriesError,
 )
@@ -46,14 +44,8 @@ def process_entries(entries: Iterable[Entry], rules: Iterable[Rule]) -> None:
 
 def process(config_files: list[Path], token_dir: Path) -> None:
     """Process entries."""
-    try:
-        config = load_config(config_files)
-        logger.info(
-            f"Loaded {len(config.rules)} rules from {len(config_files)} sources"
-        )
-    except (YAMLError, ValidationError) as e:
-        logger.exception("Failed to load configuration.")
-        raise ConfigError from e
+    config = load_config(config_files)
+    logger.info(f"Loaded {len(config.rules)} rules from {len(config_files)} sources")
 
     try:
         auth = FileAuthStore(token_dir=token_dir)
