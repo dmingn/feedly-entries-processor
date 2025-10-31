@@ -247,10 +247,14 @@ def test_load_config_with_mixed_paths(tmp_path: Path) -> None:
     # Assert that all rules are loaded
     assert loaded_config.rules == frozenset([dir_yaml_rule, standalone_yml_rule])
 
-    # Test with a non-existent file path, should raise ValidationError
-    with pytest.raises(ValidationError, match="Path does not point to a file"):
+    # Test with a non-existent file path, should raise ConfigError
+    with pytest.raises(ConfigError) as exc_info_file:
         load_config([tmp_path / "non_existent.yaml"])
+    assert isinstance(exc_info_file.value.__cause__, ValidationError)
+    assert "Path does not point to a file" in str(exc_info_file.value.__cause__)
 
-    # Test with a non-existent directory path, should raise ValidationError
-    with pytest.raises(ValidationError, match="Path does not point to a directory"):
+    # Test with a non-existent directory path, should raise ConfigError
+    with pytest.raises(ConfigError) as exc_info_dir:
         load_config([tmp_path / "non_existent_dir"])
+    assert isinstance(exc_info_dir.value.__cause__, ValidationError)
+    assert "Path does not point to a directory" in str(exc_info_dir.value.__cause__)

@@ -12,7 +12,6 @@ from pydantic import (
     FilePath,
     TypeAdapter,
     ValidationError,
-    validate_call,
 )
 from pydantic_yaml import parse_yaml_raw_as
 from ruamel.yaml.error import YAMLError
@@ -79,8 +78,7 @@ def load_config_file(file_path: Path) -> Config:
         raise ConfigError(msg) from e
 
 
-@validate_call
-def load_config(paths: Iterable[FilePath | DirectoryPath]) -> Config:
+def load_config(paths: Iterable[Path]) -> Config:
     """Load and merge configuration from multiple YAML files in given paths.
 
     Args:
@@ -97,15 +95,23 @@ def load_config(paths: Iterable[FilePath | DirectoryPath]) -> Config:
     """
     config = Config(rules=frozenset())
 
-    for path in paths:
-        if path.is_file():
-            config |= load_config_file(path)
-        elif path.is_dir():
-            for file_path in path.iterdir():
-                if file_path.is_file() and file_path.suffix.lower() in {
-                    ".yml",
-                    ".yaml",
-                }:
-                    config |= load_config_file(file_path)
+    validated_path: TypeAdapter[type[FilePath | DirectoryPath]] = TypeAdapter(
+        FilePath | DirectoryPath
+    )
+    try:
+        for path in paths:
+            validated_path.validate_python(path)
+            if path.is_file():
+                config |= load_config_file(path)
+            elif path.is_dir():
+                for file_path in path.iterdir():
+                    if file_path.is_file() and file_path.suffix.lower() in {
+                        ".yml",
+                        ".yaml",
+                    }:
+                        config |= load_config_file(file_path)
+    except ValidationError as e:
+        msg = f"Invalid path found in configuration paths: '{path}'."
+        raise ConfigError(msg) from e
 
     return config
