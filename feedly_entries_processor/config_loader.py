@@ -95,7 +95,7 @@ def load_config(paths: Iterable[Path]) -> Config:
     """
     config = Config(rules=frozenset())
 
-    validated_path: TypeAdapter[type[FilePath | DirectoryPath]] = TypeAdapter(
+    validated_path: TypeAdapter[FilePath | DirectoryPath] = TypeAdapter(
         FilePath | DirectoryPath
     )
     try:
