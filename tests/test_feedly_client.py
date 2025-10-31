@@ -3,8 +3,11 @@
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import ValidationError
 from pytest_mock import MockerFixture
+from requests.exceptions import RequestException
 
+from feedly_entries_processor.exceptions import FetchEntriesError
 from feedly_entries_processor.feedly_client import Entry, FeedlyClient, Origin, Summary
 
 
@@ -169,3 +172,29 @@ def test_fetch_saved_entries_calls_fetch_entries(
 
     expected_stream_id = f"user/{mock_feedly_session.user.id}/tag/global.saved"
     mock_fetch_entries.assert_called_once_with(expected_stream_id)
+
+
+def test_fetch_entries_raises_fetch_entries_error_on_request_exception(
+    mock_feedly_session: MagicMock,
+) -> None:
+    """Test that FetchEntriesError is raised on a RequestException."""
+    mock_feedly_session.do_api_request.side_effect = RequestException
+
+    client = FeedlyClient(mock_feedly_session)
+    with pytest.raises(FetchEntriesError):
+        list(client.fetch_entries("dummy_stream_id"))
+
+
+def test_fetch_entries_raises_fetch_entries_error_on_validation_error(
+    mock_feedly_session: MagicMock,
+) -> None:
+    """Test that FetchEntriesError is raised on a ValidationError."""
+    mock_feedly_session.do_api_request.return_value = {
+        "items": [{"invalid_field": "foo"}]
+    }
+
+    client = FeedlyClient(mock_feedly_session)
+    with pytest.raises(FetchEntriesError) as excinfo:
+        list(client.fetch_entries("dummy_stream_id"))
+
+    assert isinstance(excinfo.value.__cause__, ValidationError)

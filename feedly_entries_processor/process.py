@@ -9,10 +9,7 @@ from pydantic import ValidationError
 from requests.exceptions import RequestException
 
 from feedly_entries_processor.config_loader import Rule, load_config
-from feedly_entries_processor.exceptions import (
-    FeedlyClientInitError,
-    FetchEntriesError,
-)
+from feedly_entries_processor.exceptions import FeedlyClientInitError
 from feedly_entries_processor.feedly_client import Entry, FeedlyClient
 
 
@@ -58,9 +55,5 @@ def process(config_files: list[Path], token_dir: Path) -> None:
     rules_for_saved_entries = frozenset(
         rule for rule in config.rules if rule.source == "saved"
     )
-    try:
-        saved_entries = client.fetch_saved_entries()
-    except (RequestException, ValidationError) as e:
-        logger.exception("Failed to fetch saved entries.")
-        raise FetchEntriesError from e
+    saved_entries = client.fetch_saved_entries()
     process_entries(entries=saved_entries, rules=rules_for_saved_entries)
