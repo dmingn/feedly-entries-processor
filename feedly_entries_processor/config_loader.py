@@ -1,6 +1,7 @@
 """Configuration loading and validation for Feedly Entries Processor."""
 
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Literal
 
 from pydantic import (
@@ -9,11 +10,15 @@ from pydantic import (
     DirectoryPath,
     Field,
     FilePath,
+    TypeAdapter,
+    ValidationError,
     validate_call,
 )
 from pydantic_yaml import parse_yaml_raw_as
+from ruamel.yaml.error import YAMLError
 
 from feedly_entries_processor.entry_processors import EntryProcessor
+from feedly_entries_processor.exceptions import ConfigError
 from feedly_entries_processor.matchers import Matcher
 
 
@@ -49,8 +54,7 @@ class Config(BaseModel):
         return Config(rules=self.rules | other.rules)
 
 
-@validate_call
-def load_config_file(file_path: FilePath) -> Config:
+def load_config_file(file_path: Path) -> Config:
     """Load and validate the configuration from a YAML file.
 
     Args:
@@ -62,13 +66,17 @@ def load_config_file(file_path: FilePath) -> Config:
 
     Raises
     ------
-        ValidationError: If the configuration file does not exist, or if there
-                         is a Pydantic validation error within the configuration.
-        YAMLError: If there is an error parsing the YAML content of the
-                    configuration file (e.g., malformed YAML).
+        ConfigError: If there is an error in loading or validating the
+                     configuration, such as file not found, malformed YAML,
+                     or validation failures.
     """
-    yaml_content = file_path.read_text(encoding="utf-8")
-    return parse_yaml_raw_as(Config, yaml_content)
+    try:
+        validated_path = TypeAdapter(FilePath).validate_python(file_path)
+        yaml_content = validated_path.read_text(encoding="utf-8")
+        return parse_yaml_raw_as(Config, yaml_content)
+    except (YAMLError, ValidationError) as e:
+        msg = f"Failed to load configuration from '{file_path}'."
+        raise ConfigError(msg) from e
 
 
 @validate_call
@@ -84,10 +92,8 @@ def load_config(paths: Iterable[FilePath | DirectoryPath]) -> Config:
 
     Raises
     ------
-        ValidationError: If any configuration file does not exist, or if there
-                         is a Pydantic validation error within any configuration.
-        YAMLError: If there is an error parsing the YAML content of any
-                    configuration file (e.g., malformed YAML).
+        ConfigError: If there is an error in loading or validating any of the
+                     configuration files.
     """
     config = Config(rules=frozenset())
 

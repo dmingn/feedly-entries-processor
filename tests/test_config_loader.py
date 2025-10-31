@@ -14,6 +14,7 @@ from feedly_entries_processor.config_loader import (
     load_config_file,
 )
 from feedly_entries_processor.entry_processors import LogEntryProcessor
+from feedly_entries_processor.exceptions import ConfigError
 from feedly_entries_processor.matchers import AllMatcher, StreamIdInMatcher
 
 
@@ -80,22 +81,27 @@ def test_load_config_file_success(valid_config_file: Path) -> None:
 
 
 def test_load_config_file_file_not_found(tmp_path: Path) -> None:
-    """Test that ValidationError is raised for a non-existent file."""
+    """Test that ConfigError is raised for a non-existent file."""
     non_existent_file = tmp_path / "non_existent.yaml"
-    with pytest.raises(ValidationError, match="Path does not point to a file"):
+    with pytest.raises(ConfigError) as exc_info:
         load_config_file(non_existent_file)
+    assert isinstance(exc_info.value.__cause__, ValidationError)
+    assert "Path does not point to a file" in str(exc_info.value.__cause__)
 
 
 def test_load_config_file_invalid_yaml(invalid_yaml_file: Path) -> None:
-    """Test that YAMLError is raised for an invalid YAML file."""
-    with pytest.raises(YAMLError):
+    """Test that ConfigError is raised for an invalid YAML file."""
+    with pytest.raises(ConfigError) as exc_info:
         load_config_file(invalid_yaml_file)
+    assert isinstance(exc_info.value.__cause__, YAMLError)
 
 
 def test_load_config_file_invalid_schema(invalid_schema_file: Path) -> None:
-    """Test that ValidationError is raised for a YAML file with invalid schema."""
-    with pytest.raises(ValidationError, match="Field required"):
+    """Test that ConfigError is raised for a YAML file with invalid schema."""
+    with pytest.raises(ConfigError) as exc_info:
         load_config_file(invalid_schema_file)
+    assert isinstance(exc_info.value.__cause__, ValidationError)
+    assert "Field required" in str(exc_info.value.__cause__)
 
 
 def test_save_config_and_load_back(tmp_path: Path) -> None:
