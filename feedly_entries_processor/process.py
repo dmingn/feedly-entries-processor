@@ -3,14 +3,10 @@
 from collections.abc import Iterable
 from pathlib import Path
 
-from feedly.api_client.session import FeedlySession, FileAuthStore
 from logzero import logger
-from pydantic import ValidationError
-from requests.exceptions import RequestException
 
 from feedly_entries_processor.config_loader import Rule, load_config
-from feedly_entries_processor.exceptions import FeedlyClientInitError
-from feedly_entries_processor.feedly_client import Entry, FeedlyClient
+from feedly_entries_processor.feedly_client import Entry, create_feedly_client
 
 
 def process_entry(entry: Entry, rule: Rule) -> None:
@@ -44,13 +40,7 @@ def process(config_files: list[Path], token_dir: Path) -> None:
     config = load_config(config_files)
     logger.info(f"Loaded {len(config.rules)} rules from {len(config_files)} sources")
 
-    try:
-        auth = FileAuthStore(token_dir=token_dir)
-        feedly_session = FeedlySession(auth=auth)
-        client = FeedlyClient(feedly_session=feedly_session)
-    except (RequestException, ValidationError) as e:
-        logger.exception("Failed to initialize Feedly client.")
-        raise FeedlyClientInitError from e
+    client = create_feedly_client(token_dir)
 
     rules_for_saved_entries = frozenset(
         rule for rule in config.rules if rule.source == "saved"
