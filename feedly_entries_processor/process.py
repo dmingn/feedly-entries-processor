@@ -3,15 +3,10 @@
 from collections.abc import Iterable
 from pathlib import Path
 
-import typer
-from feedly.api_client.session import FeedlySession, FileAuthStore
 from logzero import logger
-from pydantic import ValidationError
-from requests.exceptions import RequestException
-from ruamel.yaml.error import YAMLError
 
 from feedly_entries_processor.config_loader import Rule, load_config
-from feedly_entries_processor.feedly_client import Entry, FeedlyClient
+from feedly_entries_processor.feedly_client import Entry, create_feedly_client
 
 
 def process_entry(entry: Entry, rule: Rule) -> None:
@@ -42,29 +37,13 @@ def process_entries(entries: Iterable[Entry], rules: Iterable[Rule]) -> None:
 
 def process(config_files: list[Path], token_dir: Path) -> None:
     """Process entries."""
-    try:
-        config = load_config(config_files)
-        logger.info(
-            f"Loaded {len(config.rules)} rules from {len(config_files)} sources"
-        )
-    except (YAMLError, ValidationError):
-        logger.exception("Failed to load configuration.")
-        raise typer.Exit(code=1) from None
+    config = load_config(config_files)
+    logger.info(f"Loaded {len(config.rules)} rules from {len(config_files)} sources")
 
-    try:
-        auth = FileAuthStore(token_dir=token_dir)
-        feedly_session = FeedlySession(auth=auth)
-        client = FeedlyClient(feedly_session=feedly_session)
-    except (RequestException, ValidationError):
-        logger.exception("Failed to initialize Feedly client.")
-        raise typer.Exit(code=1) from None
+    client = create_feedly_client(token_dir)
 
     rules_for_saved_entries = frozenset(
         rule for rule in config.rules if rule.source == "saved"
     )
-    try:
-        saved_entries = client.fetch_saved_entries()
-    except (RequestException, ValidationError):
-        logger.exception("Failed to fetch saved entries.")
-        raise typer.Exit(code=1) from None
+    saved_entries = client.fetch_saved_entries()
     process_entries(entries=saved_entries, rules=rules_for_saved_entries)
