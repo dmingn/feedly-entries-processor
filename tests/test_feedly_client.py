@@ -220,9 +220,9 @@ def test_create_feedly_client_success(tmp_path: Path) -> None:
     assert isinstance(client, FeedlyClient)
 
 
-def test_create_feedly_client_raises_error_on_missing_dir() -> None:
+def test_create_feedly_client_raises_error_on_missing_dir(tmp_path: Path) -> None:
     """Test that create_feedly_client raises FeedlyClientInitError on a missing directory."""
-    non_existent_dir = Path("/non/existent/dir")
+    non_existent_dir = tmp_path / "non_existent"
     with pytest.raises(FeedlyClientInitError):
         create_feedly_client(token_dir=non_existent_dir)
 
