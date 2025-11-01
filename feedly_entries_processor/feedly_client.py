@@ -1,14 +1,18 @@
 """Feedly client for fetching entries."""
 
 from collections.abc import Generator
+from pathlib import Path
 
-from feedly.api_client.session import FeedlySession
+from feedly.api_client.session import FeedlySession, FileAuthStore
 from logzero import logger
 from pydantic import BaseModel, ConfigDict, ValidationError
 from pydantic.alias_generators import to_camel
 from requests.exceptions import RequestException
 
-from feedly_entries_processor.exceptions import FetchEntriesError
+from feedly_entries_processor.exceptions import (
+    FeedlyClientInitError,
+    FetchEntriesError,
+)
 
 
 class Summary(BaseModel):
@@ -123,3 +127,32 @@ class FeedlyClient:
         yield from self.fetch_entries(
             f"user/{self.feedly_session.user.id}/tag/global.saved"
         )
+
+
+def create_feedly_client(token_dir: Path) -> FeedlyClient:
+    """Create a Feedly client.
+
+    Parameters
+    ----------
+    token_dir
+        The directory where the Feedly API token is stored.
+
+    Returns
+    -------
+    FeedlyClient
+        An initialized Feedly client.
+
+    Raises
+    ------
+    FeedlyClientInitError
+        If there is an error initializing the Feedly client.
+    """
+    try:
+        auth = FileAuthStore(token_dir=token_dir)
+        feedly_session = FeedlySession(auth=auth)
+        return FeedlyClient(feedly_session=feedly_session)
+    except (ValueError, FileNotFoundError) as e:
+        msg = (
+            f"Failed to initialize Feedly client from token directory {token_dir}: {e}"
+        )
+        raise FeedlyClientInitError(msg) from e

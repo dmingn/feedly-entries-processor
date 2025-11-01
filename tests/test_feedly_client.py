@@ -1,5 +1,6 @@
 """Tests for the Feedly client."""
 
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -7,8 +8,17 @@ from pydantic import ValidationError
 from pytest_mock import MockerFixture
 from requests.exceptions import RequestException
 
-from feedly_entries_processor.exceptions import FetchEntriesError
-from feedly_entries_processor.feedly_client import Entry, FeedlyClient, Origin, Summary
+from feedly_entries_processor.exceptions import (
+    FeedlyClientInitError,
+    FetchEntriesError,
+)
+from feedly_entries_processor.feedly_client import (
+    Entry,
+    FeedlyClient,
+    Origin,
+    Summary,
+    create_feedly_client,
+)
 
 
 @pytest.fixture
@@ -198,3 +208,27 @@ def test_fetch_entries_raises_fetch_entries_error_on_validation_error(
         list(client.fetch_entries("dummy_stream_id"))
 
     assert isinstance(excinfo.value.__cause__, ValidationError)
+
+
+def test_create_feedly_client_success(tmp_path: Path) -> None:
+    """Test that create_feedly_client returns a FeedlyClient on success."""
+    # Create dummy token files
+    (tmp_path / "access.token").write_text("dummy_access_token")
+    (tmp_path / "refresh.token").write_text("dummy_refresh_token")
+
+    client = create_feedly_client(token_dir=tmp_path)
+    assert isinstance(client, FeedlyClient)
+
+
+def test_create_feedly_client_raises_error_on_missing_dir(tmp_path: Path) -> None:
+    """Test that create_feedly_client raises FeedlyClientInitError on a missing directory."""
+    non_existent_dir = tmp_path / "non_existent"
+    with pytest.raises(FeedlyClientInitError):
+        create_feedly_client(token_dir=non_existent_dir)
+
+
+def test_create_feedly_client_raises_error_on_missing_file(tmp_path: Path) -> None:
+    """Test that create_feedly_client raises FeedlyClientInitError on a missing file."""
+    # The directory exists, but is empty
+    with pytest.raises(FeedlyClientInitError):
+        create_feedly_client(token_dir=tmp_path)
