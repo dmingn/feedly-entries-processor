@@ -64,6 +64,7 @@ def main(
     try:
         process(config_files=config_files, token_dir=token_dir)
     except FeedlyEntriesProcessorError:
+        logger.exception("An error occurred during Feedly entries processing.")
         raise typer.Exit(code=1) from None
 
 
