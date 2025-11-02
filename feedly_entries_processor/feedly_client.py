@@ -151,7 +151,7 @@ def create_feedly_client(token_dir: Path) -> FeedlyClient:
         auth = FileAuthStore(token_dir=token_dir)
         feedly_session = FeedlySession(auth=auth)
         return FeedlyClient(feedly_session=feedly_session)
-    except (ValueError, FileNotFoundError) as e:
+    except (ValueError, FileNotFoundError, PermissionError) as e:
         msg = (
             f"Failed to initialize Feedly client from token directory {token_dir}: {e}"
         )
