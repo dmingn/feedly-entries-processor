@@ -1,5 +1,6 @@
 """Tests for the Feedly client."""
 
+import stat
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -232,3 +233,38 @@ def test_create_feedly_client_raises_error_on_missing_file(tmp_path: Path) -> No
     # The directory exists, but is empty
     with pytest.raises(FeedlyClientInitError):
         create_feedly_client(token_dir=tmp_path)
+
+
+def test_create_feedly_client_raises_error_on_permission_error(
+    tmp_path: Path,
+) -> None:
+    """Test FeedlyClientInitError is raised on a PermissionError during init."""
+    access_token_file = tmp_path / "access.token"
+    access_token_file.write_text("dummy-token")
+
+    # Set file permissions to write and execute only for the owner.
+    unreadable_mode = stat.S_IWUSR | stat.S_IXUSR
+    access_token_file.chmod(unreadable_mode)
+
+    with pytest.raises(FeedlyClientInitError) as excinfo:
+        create_feedly_client(token_dir=tmp_path)
+
+    assert isinstance(excinfo.value.__cause__, PermissionError)
+
+
+def test_create_feedly_client_raises_error_on_dir_permission_error(
+    tmp_path: Path,
+) -> None:
+    """Test FeedlyClientInitError is raised on a directory PermissionError."""
+    token_dir = tmp_path / "unreadable_dir"
+    token_dir.mkdir()
+    (token_dir / "access.token").write_text("dummy-token")
+
+    # Set directory permissions to be non-executable for the owner.
+    non_executable_mode = stat.S_IRUSR | stat.S_IWUSR
+    token_dir.chmod(non_executable_mode)
+
+    with pytest.raises(FeedlyClientInitError) as excinfo:
+        create_feedly_client(token_dir=token_dir)
+
+    assert isinstance(excinfo.value.__cause__, PermissionError)
