@@ -250,3 +250,21 @@ def test_create_feedly_client_raises_error_on_permission_error(
         create_feedly_client(token_dir=tmp_path)
 
     assert isinstance(excinfo.value.__cause__, PermissionError)
+
+
+def test_create_feedly_client_raises_error_on_dir_permission_error(
+    tmp_path: Path,
+) -> None:
+    """Test FeedlyClientInitError is raised on a directory PermissionError."""
+    token_dir = tmp_path / "unreadable_dir"
+    token_dir.mkdir()
+    (token_dir / "access.token").write_text("dummy-token")
+
+    # Set directory permissions to be non-executable for the owner.
+    non_executable_mode = stat.S_IRUSR | stat.S_IWUSR
+    token_dir.chmod(non_executable_mode)
+
+    with pytest.raises(FeedlyClientInitError) as excinfo:
+        create_feedly_client(token_dir=token_dir)
+
+    assert isinstance(excinfo.value.__cause__, PermissionError)
