@@ -111,7 +111,7 @@ def test_process_entry_no_canonical_url(
 
     with pytest.raises(
         ValueError,
-        match="Entry must have a canonical_url to be processed by TodoistEntryProcessor.",
+        match=r"Entry must have a canonical_url to be processed by TodoistEntryProcessor\.",
     ):
         processor.process_entry(entry)
 
