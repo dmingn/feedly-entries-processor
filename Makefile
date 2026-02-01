@@ -1,21 +1,17 @@
 .PHONY: all
 all: check
 
-.PHONY: sync
-sync:
-	poetry sync
-
 .PHONY: check
-check: sync
-	poetry run ruff check .
-	poetry run ruff format --check .
-	poetry run mypy .
-	poetry run pytest
+check:
+	uv run ruff check .
+	uv run ruff format --check .
+	uv run mypy .
+	uv run pytest
 
 .PHONY: format
-format: sync
-	poetry run ruff check . --fix
-	poetry run ruff format .
+format:
+	uv run ruff check . --fix
+	uv run ruff format .
 
 .PHONY: format-and-check
 format-and-check:
