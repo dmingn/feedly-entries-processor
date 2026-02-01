@@ -2,10 +2,10 @@
 
 import datetime
 import os
-from typing import Any, Literal
+from functools import cached_property
+from typing import Literal
 
 from logzero import logger
-from pydantic import PrivateAttr
 from todoist_api_python.api import TodoistAPI
 
 from feedly_entries_processor.entry_processors.base_entry_processor import (
@@ -22,16 +22,14 @@ class TodoistEntryProcessor(BaseEntryProcessor):
     due_datetime: datetime.datetime | None = None
     priority: Literal[1, 2, 3, 4] | None = None
 
-    _todoist_client: TodoistAPI = PrivateAttr()
-
-    def model_post_init(self, __context: Any, /) -> None:  # noqa: ANN401
-        """Initialize the Todoist API client after model validation."""
+    @cached_property
+    def _todoist_client(self) -> TodoistAPI:
+        """Initialize and cache the Todoist API client."""
         api_token = os.environ.get("TODOIST_API_TOKEN")
         if not api_token:
             error_message = "TODOIST_API_TOKEN environment variable must be set"
             raise ValueError(error_message)
-
-        self._todoist_client = TodoistAPI(api_token)
+        return TodoistAPI(api_token)
 
     def process_entry(self, entry: Entry) -> None:
         """Process a Feedly entry by adding it as a task to Todoist."""

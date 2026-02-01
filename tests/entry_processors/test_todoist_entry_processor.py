@@ -66,10 +66,10 @@ def entry_builder() -> Callable[..., Entry]:
     return _builder
 
 
-def test_post_init(
+def test_todoist_client_initialized_on_first_access(
     mock_todoist_api: MagicMock, todoist_processor: Callable[..., TodoistEntryProcessor]
 ) -> None:
-    """Test that the Todoist API client is initialized correctly."""
+    """Test that the Todoist API client is initialized and cached on first access."""
     processor = todoist_processor()
     assert processor._todoist_client is not None  # noqa: SLF001
     assert processor._todoist_client == mock_todoist_api.return_value  # noqa: SLF001
