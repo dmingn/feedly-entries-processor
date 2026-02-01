@@ -7,12 +7,12 @@ This document provides guidelines and context for AI coding agents working on th
 This project assumes a Python development environment.
 
 - **Python Version**: Refer to the `.python-version` file in the project root for the recommended Python version.
-- **Dependency Management**: `poetry` is used for dependency management and virtual environment creation.
+- **Dependency Management**: `uv` is used for dependency management and virtual environment creation.
 - **Environment Setup**: To set up the project's virtual environment and install/sync dependencies, run:
   ```bash
-  poetry sync
+  uv sync
   ```
-  This command will create a virtual environment (if one doesn't exist) and install/sync all required packages as per `poetry.lock`.
+  This command will create a virtual environment (if one doesn't exist) and install/sync all required packages as per `uv.lock`.
 
 ## Testing Instructions
 
