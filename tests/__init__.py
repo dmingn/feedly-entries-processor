@@ -1,1 +1,1 @@
-"""Tests for feedly-saved-entries-processor."""
+"""Tests for feedly-entries-processor."""

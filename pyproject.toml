@@ -1,6 +1,6 @@
 [project]
-name = "feedly-saved-entries-processor"
-version = "2025.08.03.0"
+name = "feedly-entries-processor"
+version = "0.1.0"
 description = ""
 authors = [
     {name = "dmingn",email = "dmingn@users.noreply.github.com"}
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-feedly-saved-entries-processor = "feedly_saved_entries_processor.main:app"
+feedly-entries-processor = "feedly_entries_processor.__main__:app"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -41,6 +41,7 @@ mypy = "^1.17.1"
 ruff = "^0.12.7"
 pytest = "^8.4.1"
 pytest-mock = "^3.12.0"
+types-requests = "^2.32.4.20250913"
 
 [tool.ruff]
 line-length = 88

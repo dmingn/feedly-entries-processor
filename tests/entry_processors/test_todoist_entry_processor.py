@@ -8,17 +8,17 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from feedly_saved_entries_processor.entry_processors.todoist_entry_processor import (
+from feedly_entries_processor.entry_processors.todoist_entry_processor import (
     TodoistEntryProcessor,
 )
-from feedly_saved_entries_processor.feedly_client import Entry, Origin, Summary
+from feedly_entries_processor.feedly_client import Entry, Origin, Summary
 
 
 @pytest.fixture
 def mock_todoist_api(mocker: MockerFixture) -> MagicMock:
     """Fixture for mocking TodoistAPI."""
     mock_api: MagicMock = mocker.patch(
-        "feedly_saved_entries_processor.entry_processors.todoist_entry_processor.TodoistAPI"
+        "feedly_entries_processor.entry_processors.todoist_entry_processor.TodoistAPI"
     )
     return mock_api
 

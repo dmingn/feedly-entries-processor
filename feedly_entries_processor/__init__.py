@@ -1,0 +1,1 @@
+"""Feedly entries processor."""

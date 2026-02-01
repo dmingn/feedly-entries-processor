@@ -1,1 +1,0 @@
-"""Feedly saved entries processor."""

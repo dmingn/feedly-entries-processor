@@ -1,3 +1,3 @@
-# feedly-saved-entries-processor
+# feedly-entries-processor
 
-A Python script to fetch and process articles saved in Feedly's "Read Later".
+A Python script to fetch and process entries from Feedly.

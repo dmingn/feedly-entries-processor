@@ -3,9 +3,18 @@ name: Workflow
 on:
   push:
     branches: [main]
-    tags: ["*"]
   pull_request:
     branches: ["**"]
+  workflow_dispatch:
+    inputs:
+      bump_level:
+        description: "The part of the version to bump (patch, minor, or major)"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,13 +25,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Install poetry
         run: pipx install poetry
 
       - name: Set up Python
-        uses: actions/setup-python@v5.6.0
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version-file: ".python-version"
           cache: "poetry"
@@ -36,150 +45,69 @@ jobs:
       - name: Run all checks
         run: make check
 
-  validate_version_format:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.2.2
-
-      - name: Install poetry
-        run: pipx install poetry
-
-      - name: Check version format
-        run: |
-          PYPROJECT_VERSION=$(poetry version --short)
-          if [[ "$PYPROJECT_VERSION" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}\.[0-9]+$ ]]; then
-            echo "Version format is valid: $PYPROJECT_VERSION"
-          else
-            echo "Version format is invalid: $PYPROJECT_VERSION. Expected YYYY.MM.DD.X format."
-            exit 1
-          fi
-
   release:
-    needs: [check, validate_version_format]
+    needs: [check]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    # This job runs only when manually triggered via workflow_dispatch
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        # We need to check out the code with full history to allow version bumping
+        # and pushing back to the repository.
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
 
       - name: Install poetry
         run: pipx install poetry
 
-      - name: Get version
-        id: get_version
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version-file: ".python-version"
+          cache: "poetry"
+
+      - name: Install dependencies
+        run: poetry sync
+
+      - name: Configure Git
         run: |
-          PYPROJECT_VERSION=$(poetry version --short)
-          echo "pyproject.toml version: $PYPROJECT_VERSION"
-          echo "release_version=$PYPROJECT_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Check if release already exists
-        id: check_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if gh release view ${{ steps.get_version.outputs.release_version }} >/dev/null 2>&1; then
-            echo "Release ${{ steps.get_version.outputs.release_version }} already exists."
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "Release ${{ steps.get_version.outputs.release_version }} does not exist. Creating it."
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create GitHub Release
-        if: steps.check_release.outputs.exists == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create "${{ steps.get_version.outputs.release_version }}" \
-            --generate-notes
-
-  propose-version-update:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.2.2
-
-      - name: Install poetry
-        run: pipx install poetry
-
-      - name: Update version if needed
-        id: update_version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Get the latest release version from GitHub
-          LATEST_GH_RELEASE=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' || echo "")
-
-          TODAY=$(date +'%Y.%m.%d')
-
-          if [[ -z "$LATEST_GH_RELEASE" ]]; then
-            echo "No releases found. Starting with version $TODAY.0"
-            POTENTIAL_NEW_VERSION="$TODAY.0"
-          else
-            echo "Latest GitHub release is $LATEST_GH_RELEASE"
-            LATEST_RELEASE_DATE=$(echo $LATEST_GH_RELEASE | cut -d. -f1-3)
-            LATEST_RELEASE_PATCH=$(echo $LATEST_GH_RELEASE | cut -d. -f4)
-
-            if [[ "$LATEST_RELEASE_DATE" < "$TODAY" ]]; then
-              POTENTIAL_NEW_VERSION="$TODAY.0"
-            else # LATEST_RELEASE_DATE == TODAY
-              NEW_PATCH=$((LATEST_RELEASE_PATCH + 1))
-              POTENTIAL_NEW_VERSION="$TODAY.$NEW_PATCH"
-            fi
-          fi
-
-          echo "Potential new version is $POTENTIAL_NEW_VERSION"
-
-          CURRENT_VERSION_IN_CODE=$(poetry version --short)
-          echo "Current version in pyproject.toml is $CURRENT_VERSION_IN_CODE"
-
-          if [[ "$POTENTIAL_NEW_VERSION" != "$CURRENT_VERSION_IN_CODE" ]]; then
-            echo "Version requires update. Proposing version $POTENTIAL_NEW_VERSION"
-            poetry version $POTENTIAL_NEW_VERSION
-            echo "version_updated=true" >> $GITHUB_OUTPUT
-            echo "new_version=$POTENTIAL_NEW_VERSION" >> $GITHUB_OUTPUT
-          else
-            echo "Version is already correct: $CURRENT_VERSION_IN_CODE"
-            echo "version_updated=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Prepare Version Update Branch
-        id: prepare_branch
-        if: steps.update_version.outputs.version_updated == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          BRANCH_NAME="feature/auto-version-update"
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          git checkout -B "$BRANCH_NAME"
-          git add pyproject.toml
-          git commit -m "build: update version to ${{ steps.update_version.outputs.new_version }}"
-          git push --force origin "$BRANCH_NAME"
-
-      - name: Create/Update Pull Request
-        if: steps.update_version.outputs.version_updated == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_FOR_CREATING_PR }}
+      - name: Bump version and get new version tag
+        id: bump_version
         run: |
-          BRANCH_NAME="${{ steps.prepare_branch.outputs.branch_name }}"
-          PR_STATE=$(gh pr view "$BRANCH_NAME" --json state --jq .state 2>/dev/null)
+          # Bump the version using poetry
+          poetry version ${{ github.event.inputs.bump_level }}
+          # Get the new version
+          NEW_VERSION=$(poetry version --short)
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
 
-          if [[ "$PR_STATE" == "OPEN" ]]; then
-            echo "An open pull request for branch '$BRANCH_NAME' already exists. It has been updated by the push."
-          else
-            if [[ -n "$PR_STATE" ]]; then
-              echo "A pull request for branch '$BRANCH_NAME' exists but is not open (state: $PR_STATE). Creating a new one."
-            else
-              echo "No pull request found for branch '$BRANCH_NAME'. Creating a new one."
-            fi
-            gh pr create \
-              --title "build: Propose version update to ${{ steps.update_version.outputs.new_version }}" \
-              --body "This PR proposes an update to the project version. Merging this PR will trigger a new release." \
-              --head "$BRANCH_NAME" \
-              --base "master"
-          fi
+      - name: Commit and push version bump
+        run: |
+          git add pyproject.toml poetry.lock
+          git commit -m "build: bump version to ${{ steps.bump_version.outputs.new_version }}"
+          git push
+
+      - name: Create Git tag and push
+        run: |
+          git tag ${{ steps.bump_version.outputs.new_tag }}
+          git push origin ${{ steps.bump_version.outputs.new_tag }}
+
+      - name: Generate config schema
+        run: |
+          poetry run feedly-entries-processor show-config-schema > config_schema.json
+
+      - name: Create GitHub Release
+        env:
+          # This token is provided by Actions, and has read/write permissions for the repo
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ steps.bump_version.outputs.new_tag }} \
+            --generate-notes \
+            --title "${{ steps.bump_version.outputs.new_tag }}" \
+            --asset config_schema.json

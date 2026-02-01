@@ -1,14 +1,29 @@
-# Language Policy
+# AGENTS.md
 
-## Development Language
+This document provides guidelines and context for AI coding agents working on this project.
 
-All code, documentation (including code comments), and commit messages MUST be written in English.
+## Dev environment tips
 
-## Conversational Language
+This project assumes a Python development environment.
 
-The language used for communication and conversation with the user should match the language the user is using.
+- **Python Version**: Refer to the `.python-version` file in the project root for the recommended Python version.
+- **Dependency Management**: `poetry` is used for dependency management and virtual environment creation.
+- **Environment Setup**: To set up the project's virtual environment and install/sync dependencies, run:
+  ```bash
+  poetry sync
+  ```
+  This command will create a virtual environment (if one doesn't exist) and install/sync all required packages as per `poetry.lock`.
 
-# Commit Message Generation
+## Testing Instructions
+
+To ensure code quality and adherence to standards, the agent SHOULD execute `make format-and-check` before submitting changes. This command runs formatting, linting, type checking, and unit tests.
+
+## Language Policy
+
+- **Development Language**: All code, documentation (including code comments), and commit messages MUST be written in English.
+- **Conversational Language**: The language used for communication and conversation with the user should match the language the user is using.
+
+## Commit Message Generation
 
 When creating a commit message, the agent MUST adhere to the following rules:
 

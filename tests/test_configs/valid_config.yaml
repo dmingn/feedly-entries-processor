@@ -1,0 +1,18 @@
+rules:
+  - name: "Log Rule for Stream ID"
+    source: "saved"
+    match:
+      matcher_name: "stream_id_in"
+      stream_ids:
+        - "feed/test.com/3"
+    processor:
+      processor_name: "log"
+      level: "info"
+
+  - name: "Log Rule for All Matcher"
+    source: "saved"
+    match:
+      matcher_name: "all"
+    processor:
+      processor_name: "log"
+      level: "debug"

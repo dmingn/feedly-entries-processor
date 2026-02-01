@@ -8,10 +8,10 @@ from typing import Literal
 from logzero import logger
 from todoist_api_python.api import TodoistAPI
 
-from feedly_saved_entries_processor.entry_processors.base_entry_processor import (
+from feedly_entries_processor.entry_processors.base_entry_processor import (
     BaseEntryProcessor,
 )
-from feedly_saved_entries_processor.feedly_client import Entry
+from feedly_entries_processor.feedly_client import Entry
 
 
 class TodoistEntryProcessor(BaseEntryProcessor):
