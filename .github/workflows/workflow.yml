@@ -27,20 +27,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: Install poetry
-        run: pipx install poetry
-
-      - name: Set up Python
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@803947b9bd8e9f986429fa0c5a41c367cd732b41 # v7.2.1
         with:
-          python-version-file: ".python-version"
-          cache: "poetry"
+          enable-cache: true
 
       - name: Check lock file consistency
-        run: poetry check --lock
-
-      - name: Install dependencies
-        run: poetry sync
+        run: uv lock --check
 
       - name: Run all checks
         run: make check
@@ -60,17 +53,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install poetry
-        run: pipx install poetry
-
-      - name: Set up Python
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@803947b9bd8e9f986429fa0c5a41c367cd732b41 # v7.2.1
         with:
-          python-version-file: ".python-version"
-          cache: "poetry"
-
-      - name: Install dependencies
-        run: poetry sync
+          enable-cache: true
 
       - name: Configure Git
         run: |
@@ -80,16 +66,16 @@ jobs:
       - name: Bump version and get new version tag
         id: bump_version
         run: |
-          # Bump the version using poetry
-          poetry version ${{ github.event.inputs.bump_level }}
+          # Bump the version using uv
+          uv version --bump ${{ github.event.inputs.bump_level }}
           # Get the new version
-          NEW_VERSION=$(poetry version --short)
+          NEW_VERSION=$(uv version --short)
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Commit and push version bump
         run: |
-          git add pyproject.toml poetry.lock
+          git add pyproject.toml uv.lock
           git commit -m "build: bump version to ${{ steps.bump_version.outputs.new_version }}"
           git push
 
@@ -100,7 +86,7 @@ jobs:
 
       - name: Generate config schema
         run: |
-          poetry run feedly-entries-processor show-config-schema > config_schema.json
+          uv run feedly-entries-processor show-config-schema > config_schema.json
 
       - name: Create GitHub Release
         env:
