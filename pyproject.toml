@@ -23,6 +23,9 @@ feedly-entries-processor = "feedly_entries_processor.__main__:app"
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.poetry]
+packages = [{include = "feedly_entries_processor", from = "src"}]
+
 [tool.mypy]
 exclude_gitignore = true
 strict = true
