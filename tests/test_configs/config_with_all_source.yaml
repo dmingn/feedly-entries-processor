@@ -1,0 +1,9 @@
+rules:
+  - name: "Log Rule from All feed"
+    source:
+      source_name: "all"
+    match:
+      matcher_name: "all"
+    processor:
+      processor_name: "log"
+      level: "info"
