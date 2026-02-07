@@ -102,15 +102,15 @@ wheels = [
 
 [[package]]
 name = "feedly-client"
-version = "0.26"
+version = "0.27"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "backports-cached-property" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8f/9a/fb0df7ca224535e59ef60a5733ad6fbdbe72e65ae553a223cda1995d0e37/feedly-client-0.26.tar.gz", hash = "sha256:723a57f3d2cf6619d7af9d9da133f1b6cf73744fe24e298e2b3147942ddc0866", size = 17731, upload-time = "2022-11-28T20:25:48.84Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fe/a6/5bae6093cd0fe20c35b25b391e01ee7648ea8fd04e35a8532f90435fb64d/feedly_client-0.27.tar.gz", hash = "sha256:32f1e8d10d41de62e469f2cc2e654a33013ff247aac79ff85e0c3ee16e1046df", size = 18532, upload-time = "2025-10-10T22:53:41.774Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5c/a8/9c3eb25dc014b5341547fcdbcc472eae8c1c8c1920d80c6fcf90235eeeb7/feedly_client-0.26-py3-none-any.whl", hash = "sha256:9458ba92a7ac5cc71928bf86712a0def2cf319c436af0e431512d087146a87f5", size = 17773, upload-time = "2022-11-28T20:25:46.267Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/b3/6d604f79d03b83274ed05aa32ec29d48f46a3ba9b2e2dae449fd519dc347/feedly_client-0.27-py3-none-any.whl", hash = "sha256:3055fc6216bd460a73464b712e56e708e466d779143ba0b09d858c6595342cbf", size = 17796, upload-time = "2025-10-10T22:53:40.364Z" },
 ]
 
 [[package]]
@@ -137,12 +137,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "feedly-client", specifier = ">=0.26,<0.27" },
+    { name = "feedly-client", specifier = ">=0.26,<0.28" },
     { name = "logzero", specifier = ">=1.7.0,<2.0.0" },
     { name = "pydantic", specifier = ">=2.11.7,<3.0.0" },
     { name = "pydantic-yaml", specifier = ">=1.6.0,<2.0.0" },
     { name = "todoist-api-python", specifier = ">=3.1.0,<4.0.0" },
-    { name = "typer", specifier = ">=0.16.0,<0.17.0" },
+    { name = "typer", specifier = ">=0.16.0,<0.22.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -547,7 +547,7 @@ wheels = [
 
 [[package]]
 name = "typer"
-version = "0.16.1"
+version = "0.21.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -555,9 +555,9 @@ dependencies = [
     { name = "shellingham" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/43/78/d90f616bf5f88f8710ad067c1f8705bf7618059836ca084e5bb2a0855d75/typer-0.16.1.tar.gz", hash = "sha256:d358c65a464a7a90f338e3bb7ff0c74ac081449e53884b12ba658cbd72990614", size = 102836, upload-time = "2025-08-18T19:18:22.898Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/36/bf/8825b5929afd84d0dabd606c67cd57b8388cb3ec385f7ef19c5cc2202069/typer-0.21.1.tar.gz", hash = "sha256:ea835607cd752343b6b2b7ce676893e5a0324082268b48f27aa058bdb7d2145d", size = 110371, upload-time = "2026-01-06T11:21:10.989Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2d/76/06dbe78f39b2203d2a47d5facc5df5102d0561e2807396471b5f7c5a30a1/typer-0.16.1-py3-none-any.whl", hash = "sha256:90ee01cb02d9b8395ae21ee3368421faf21fa138cb2a541ed369c08cec5237c9", size = 46397, upload-time = "2025-08-18T19:18:21.663Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/1d/d9257dd49ff2ca23ea5f132edf1281a0c4f9de8a762b9ae399b670a59235/typer-0.21.1-py3-none-any.whl", hash = "sha256:7985e89081c636b88d172c2ee0cfe33c253160994d47bdfdc302defd7d1f1d01", size = 47381, upload-time = "2026-01-06T11:21:09.824Z" },
 ]
 
 [[package]]
