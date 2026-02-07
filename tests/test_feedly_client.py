@@ -1,11 +1,25 @@
 """Tests for the Feedly client."""
 
+import stat
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import ValidationError
 from pytest_mock import MockerFixture
+from requests.exceptions import RequestException
 
-from feedly_entries_processor.feedly_client import Entry, FeedlyClient, Origin, Summary
+from feedly_entries_processor.exceptions import (
+    FeedlyClientInitError,
+    FetchEntriesError,
+)
+from feedly_entries_processor.feedly_client import (
+    Entry,
+    FeedlyClient,
+    Origin,
+    Summary,
+    create_feedly_client,
+)
 
 
 @pytest.fixture
@@ -169,3 +183,88 @@ def test_fetch_saved_entries_calls_fetch_entries(
 
     expected_stream_id = f"user/{mock_feedly_session.user.id}/tag/global.saved"
     mock_fetch_entries.assert_called_once_with(expected_stream_id)
+
+
+def test_fetch_entries_raises_fetch_entries_error_on_request_exception(
+    mock_feedly_session: MagicMock,
+) -> None:
+    """Test that FetchEntriesError is raised on a RequestException."""
+    mock_feedly_session.do_api_request.side_effect = RequestException
+
+    client = FeedlyClient(mock_feedly_session)
+    with pytest.raises(FetchEntriesError):
+        list(client.fetch_entries("dummy_stream_id"))
+
+
+def test_fetch_entries_raises_fetch_entries_error_on_validation_error(
+    mock_feedly_session: MagicMock,
+) -> None:
+    """Test that FetchEntriesError is raised on a ValidationError."""
+    mock_feedly_session.do_api_request.return_value = {
+        "items": [{"invalid_field": "foo"}]
+    }
+
+    client = FeedlyClient(mock_feedly_session)
+    with pytest.raises(FetchEntriesError) as excinfo:
+        list(client.fetch_entries("dummy_stream_id"))
+
+    assert isinstance(excinfo.value.__cause__, ValidationError)
+
+
+def test_create_feedly_client_success(tmp_path: Path) -> None:
+    """Test that create_feedly_client returns a FeedlyClient on success."""
+    # Create dummy token files
+    (tmp_path / "access.token").write_text("dummy_access_token")
+    (tmp_path / "refresh.token").write_text("dummy_refresh_token")
+
+    client = create_feedly_client(token_dir=tmp_path)
+    assert isinstance(client, FeedlyClient)
+
+
+def test_create_feedly_client_raises_error_on_missing_dir(tmp_path: Path) -> None:
+    """Test that create_feedly_client raises FeedlyClientInitError on a missing directory."""
+    non_existent_dir = tmp_path / "non_existent"
+    with pytest.raises(FeedlyClientInitError):
+        create_feedly_client(token_dir=non_existent_dir)
+
+
+def test_create_feedly_client_raises_error_on_missing_file(tmp_path: Path) -> None:
+    """Test that create_feedly_client raises FeedlyClientInitError on a missing file."""
+    # The directory exists, but is empty
+    with pytest.raises(FeedlyClientInitError):
+        create_feedly_client(token_dir=tmp_path)
+
+
+def test_create_feedly_client_raises_error_on_permission_error(
+    tmp_path: Path,
+) -> None:
+    """Test FeedlyClientInitError is raised on a PermissionError during init."""
+    access_token_file = tmp_path / "access.token"
+    access_token_file.write_text("dummy-token")
+
+    # Set file permissions to write and execute only for the owner.
+    unreadable_mode = stat.S_IWUSR | stat.S_IXUSR
+    access_token_file.chmod(unreadable_mode)
+
+    with pytest.raises(FeedlyClientInitError) as excinfo:
+        create_feedly_client(token_dir=tmp_path)
+
+    assert isinstance(excinfo.value.__cause__, PermissionError)
+
+
+def test_create_feedly_client_raises_error_on_dir_permission_error(
+    tmp_path: Path,
+) -> None:
+    """Test FeedlyClientInitError is raised on a directory PermissionError."""
+    token_dir = tmp_path / "unreadable_dir"
+    token_dir.mkdir()
+    (token_dir / "access.token").write_text("dummy-token")
+
+    # Set directory permissions to be non-executable for the owner.
+    non_executable_mode = stat.S_IRUSR | stat.S_IWUSR
+    token_dir.chmod(non_executable_mode)
+
+    with pytest.raises(FeedlyClientInitError) as excinfo:
+        create_feedly_client(token_dir=token_dir)
+
+    assert isinstance(excinfo.value.__cause__, PermissionError)
