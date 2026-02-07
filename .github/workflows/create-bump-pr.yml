@@ -1,0 +1,64 @@
+name: Create version bump PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_level:
+        description: "The part of the version to bump (patch, minor, or major)"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  create-bump-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to push the new branch (default token has read-only contents).
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@803947b9bd8e9f986429fa0c5a41c367cd732b41 # v7.2.1
+        with:
+          enable-cache: true
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version and get new version
+        id: bump_version
+        run: |
+          uv version --bump ${{ github.event.inputs.bump_level }}
+          NEW_VERSION=$(uv version --short)
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "branch_name=release/v$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Ensure no existing branch for this version
+        run: |
+          if git ls-remote --exit-code --heads origin "${{ steps.bump_version.outputs.branch_name }}" >/dev/null 2>&1; then
+            echo "::error::Branch ${{ steps.bump_version.outputs.branch_name }} already exists. Close or merge the existing PR first."
+            exit 1
+          fi
+
+      - name: Create branch and push version bump
+        run: |
+          git checkout -b "${{ steps.bump_version.outputs.branch_name }}"
+          git add pyproject.toml uv.lock
+          git commit -m "build: bump version to ${{ steps.bump_version.outputs.new_version }}"
+          git push -u origin "${{ steps.bump_version.outputs.branch_name }}"
+
+      - name: Create Pull Request
+        run: |
+          gh pr create \
+            --base main \
+            --head "${{ steps.bump_version.outputs.branch_name }}" \
+            --title "build: bump version to ${{ steps.bump_version.outputs.new_version }}" \
+            --body "Version bump (${{ github.event.inputs.bump_level }}) to ${{ steps.bump_version.outputs.new_version }}. Merge this PR to trigger the release."

@@ -5,16 +5,6 @@ on:
     branches: [main]
   pull_request:
     branches: ["**"]
-  workflow_dispatch:
-    inputs:
-      bump_level:
-        description: "The part of the version to bump (patch, minor, or major)"
-        required: true
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -38,19 +28,18 @@ jobs:
       - name: Run all checks
         run: make check
 
-  release:
+  release-on-version-bump:
     needs: [check]
     runs-on: ubuntu-latest
-    # This job runs only when manually triggered via workflow_dispatch
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: write
     steps:
       - name: Checkout code
-        # We need to check out the code with full history to allow version bumping
-        # and pushing back to the repository.
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
+          # Full history is required so git tag -l sees all existing tags
+          # and we can correctly compare pyproject.toml version to the latest tag.
           fetch-depth: 0
 
       - name: Install uv
@@ -58,42 +47,33 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Configure Git
+      - name: Determine if release is needed
+        id: should_release
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Bump version and get new version tag
-        id: bump_version
-        run: |
-          # Bump the version using uv
-          uv version --bump ${{ github.event.inputs.bump_level }}
-          # Get the new version
-          NEW_VERSION=$(uv version --short)
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Commit and push version bump
-        run: |
-          git add pyproject.toml uv.lock
-          git commit -m "build: bump version to ${{ steps.bump_version.outputs.new_version }}"
-          git push
-
-      - name: Create Git tag and push
-        run: |
-          git tag ${{ steps.bump_version.outputs.new_tag }}
-          git push origin ${{ steps.bump_version.outputs.new_tag }}
+          LATEST_TAG=$(git tag -l 'v*' --sort=-v:refname | head -1)
+          LATEST_VERSION=${LATEST_TAG#v}
+          if [ -z "$LATEST_VERSION" ]; then
+            LATEST_VERSION="0.0.0"
+          fi
+          CURRENT=$(uv version --short)
+          GREATER=$(echo -e "${LATEST_VERSION}\n${CURRENT}" | sort -V | tail -1)
+          if [ "$GREATER" = "$CURRENT" ] && [ "$CURRENT" != "$LATEST_VERSION" ]; then
+            echo "release=true" >> $GITHUB_OUTPUT
+            echo "new_version=$CURRENT" >> $GITHUB_OUTPUT
+            echo "new_tag=v$CURRENT" >> $GITHUB_OUTPUT
+          else
+            echo "release=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Generate config schema
+        if: steps.should_release.outputs.release == 'true'
         run: |
           uv run feedly-entries-processor show-config-schema > config_schema.json
 
       - name: Create GitHub Release
-        env:
-          # This token is provided by Actions, and has read/write permissions for the repo
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.should_release.outputs.release == 'true'
         run: |
-          gh release create ${{ steps.bump_version.outputs.new_tag }} \
+          gh release create ${{ steps.should_release.outputs.new_tag }} \
             --generate-notes \
-            --title "${{ steps.bump_version.outputs.new_tag }}" \
+            --title "${{ steps.should_release.outputs.new_tag }}" \
             --asset config_schema.json
