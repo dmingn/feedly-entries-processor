@@ -1,6 +1,7 @@
 rules:
   - name: "Log Rule for Stream ID"
-    source: "saved"
+    source:
+      source_name: "saved"
     match:
       matcher_name: "stream_id_in"
       stream_ids:
@@ -10,7 +11,8 @@ rules:
       level: "info"
 
   - name: "Log Rule for All Matcher"
-    source: "saved"
+    source:
+      source_name: "saved"
     match:
       matcher_name: "all"
     processor:

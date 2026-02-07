@@ -1,6 +1,7 @@
 rules:
   - name: "Invalid YAML: missing colon"
-    source: "saved"
+    source:
+      source_name: "saved"
     match # Missing colon
       matcher_name: "all"
     processor:

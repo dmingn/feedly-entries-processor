@@ -11,6 +11,7 @@ from feedly_entries_processor.entry_processors import LogEntryProcessor
 from feedly_entries_processor.feedly_client import Entry
 from feedly_entries_processor.matchers import AllMatcher
 from feedly_entries_processor.process import process_entries, process_entry
+from feedly_entries_processor.sources import SavedSource
 
 
 @pytest.fixture
@@ -44,7 +45,10 @@ def mock_processor(mocker: MockerFixture) -> LogEntryProcessor:
 def mock_rule(mock_matcher: AllMatcher, mock_processor: LogEntryProcessor) -> Rule:
     """Fixture for a mock Rule."""
     return Rule(
-        name="test-rule", source="saved", match=mock_matcher, processor=mock_processor
+        name="test-rule",
+        source=SavedSource(),
+        match=mock_matcher,
+        processor=mock_processor,
     )
 
 
