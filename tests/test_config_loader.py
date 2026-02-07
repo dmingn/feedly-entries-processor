@@ -16,7 +16,7 @@ from feedly_entries_processor.config_loader import (
 from feedly_entries_processor.entry_processors import LogEntryProcessor
 from feedly_entries_processor.exceptions import ConfigError
 from feedly_entries_processor.matchers import AllMatcher, StreamIdInMatcher
-from feedly_entries_processor.sources import SavedSource
+from feedly_entries_processor.sources import AllSource, SavedSource
 
 
 def _save_config(config: Config, file_path: Path) -> None:
@@ -79,6 +79,17 @@ def test_load_config_file_success(valid_config_file: Path) -> None:
         )
     )
     assert config == expected_config
+
+
+def test_load_config_file_with_all_source(test_configs_path: Path) -> None:
+    """Test that a configuration file with source_name 'all' loads and yields AllSource."""
+    config_file = test_configs_path / "config_with_all_source.yaml"
+    config = load_config_file(config_file)
+
+    assert len(config.rules) == 1
+    rule = next(iter(config.rules))
+    assert rule.source == AllSource()
+    assert rule.name == "Log Rule from All feed"
 
 
 def test_load_config_file_file_not_found(tmp_path: Path) -> None:
