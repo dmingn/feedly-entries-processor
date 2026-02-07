@@ -73,6 +73,11 @@ class FeedlyClient:
     def __init__(self, feedly_session: FeedlySession) -> None:
         self.feedly_session = feedly_session
 
+    @property
+    def user_id(self) -> str:
+        """Return the authenticated user's ID."""
+        return str(self.feedly_session.user.id)
+
     def fetch_entries(self, stream_id: str) -> Generator[Entry]:
         """Fetch entries from a stream.
 
@@ -121,12 +126,6 @@ class FeedlyClient:
                 break
 
             continuation = stream_contents.continuation
-
-    def fetch_saved_entries(self) -> Generator[Entry]:
-        """Fetch saved entries from Feedly."""
-        yield from self.fetch_entries(
-            f"user/{self.feedly_session.user.id}/tag/global.saved"
-        )
 
 
 def create_feedly_client(token_dir: Path) -> FeedlyClient:

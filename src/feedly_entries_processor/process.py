@@ -1,12 +1,19 @@
 """Module for processing Feedly entries."""
 
-from collections.abc import Iterable
-from pathlib import Path
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from logzero import logger
 
 from feedly_entries_processor.config_loader import Rule, load_config
 from feedly_entries_processor.feedly_client import Entry, create_feedly_client
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from pathlib import Path
+
+    from feedly_entries_processor.sources import StreamSource
 
 
 def process_entry(entry: Entry, rule: Rule) -> None:
@@ -42,8 +49,10 @@ def process(config_files: list[Path], token_dir: Path) -> None:
 
     client = create_feedly_client(token_dir)
 
-    rules_for_saved_entries = frozenset(
-        rule for rule in config.rules if rule.source == "saved"
-    )
-    saved_entries = client.fetch_saved_entries()
-    process_entries(entries=saved_entries, rules=rules_for_saved_entries)
+    rules_by_source: dict[StreamSource, set[Rule]] = {}
+    for rule in config.rules:
+        rules_by_source.setdefault(rule.source, set()).add(rule)
+
+    for source, rules in rules_by_source.items():
+        entries = source.fetch_entries(client)
+        process_entries(entries=entries, rules=rules)

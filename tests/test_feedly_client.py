@@ -6,7 +6,6 @@ from unittest.mock import MagicMock
 
 import pytest
 from pydantic import ValidationError
-from pytest_mock import MockerFixture
 from requests.exceptions import RequestException
 
 from feedly_entries_processor.exceptions import (
@@ -169,20 +168,10 @@ def test_fetch_entries_no_entries(mock_feedly_session: MagicMock) -> None:
     mock_feedly_session.do_api_request.assert_called_once()
 
 
-def test_fetch_saved_entries_calls_fetch_entries(
-    mock_feedly_session: MagicMock, mocker: MockerFixture
-) -> None:
-    """Test that fetch_saved_entries calls fetch_entries with the correct stream_id."""
-    mock_fetch_entries = mocker.patch(
-        "feedly_entries_processor.feedly_client.FeedlyClient.fetch_entries"
-    )
-
+def test_user_id_returns_session_user_id(mock_feedly_session: MagicMock) -> None:
+    """Test that user_id property returns the session user's ID."""
     client = FeedlyClient(mock_feedly_session)
-    # list() is necessary to consume the generator
-    list(client.fetch_saved_entries())
-
-    expected_stream_id = f"user/{mock_feedly_session.user.id}/tag/global.saved"
-    mock_fetch_entries.assert_called_once_with(expected_stream_id)
+    assert client.user_id == "test_user_id"
 
 
 def test_fetch_entries_raises_fetch_entries_error_on_request_exception(

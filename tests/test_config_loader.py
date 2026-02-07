@@ -16,6 +16,7 @@ from feedly_entries_processor.config_loader import (
 from feedly_entries_processor.entry_processors import LogEntryProcessor
 from feedly_entries_processor.exceptions import ConfigError
 from feedly_entries_processor.matchers import AllMatcher, StreamIdInMatcher
+from feedly_entries_processor.sources import SavedSource
 
 
 def _save_config(config: Config, file_path: Path) -> None:
@@ -62,7 +63,7 @@ def test_load_config_file_success(valid_config_file: Path) -> None:
             (
                 Rule(
                     name="Log Rule for Stream ID",
-                    source="saved",
+                    source=SavedSource(),
                     match=StreamIdInMatcher(
                         matcher_name="stream_id_in", stream_ids=("feed/test.com/3",)
                     ),
@@ -70,7 +71,7 @@ def test_load_config_file_success(valid_config_file: Path) -> None:
                 ),
                 Rule(
                     name="Log Rule for All Matcher",
-                    source="saved",
+                    source=SavedSource(),
                     match=AllMatcher(matcher_name="all"),
                     processor=LogEntryProcessor(processor_name="log", level="debug"),
                 ),
@@ -110,7 +111,7 @@ def test_save_config_and_load_back(tmp_path: Path) -> None:
         rules=(
             Rule(
                 name="Saved Rule",
-                source="saved",
+                source=SavedSource(),
                 match=StreamIdInMatcher(
                     matcher_name="stream_id_in", stream_ids=("feed/saved.com/1",)
                 ),
@@ -134,13 +135,13 @@ def test_config_or_operator() -> None:
     """Test the | operator for combining two Config objects."""
     rule1 = Rule(
         name="Rule 1",
-        source="saved",
+        source=SavedSource(),
         match=AllMatcher(matcher_name="all"),
         processor=LogEntryProcessor(processor_name="log", level="info"),
     )
     rule2 = Rule(
         name="Rule 2",
-        source="saved",
+        source=SavedSource(),
         match=StreamIdInMatcher(
             matcher_name="stream_id_in", stream_ids=("feed/test.com/1",)
         ),
@@ -148,7 +149,7 @@ def test_config_or_operator() -> None:
     )
     common_rule = Rule(
         name="Common Rule",
-        source="saved",
+        source=SavedSource(),
         match=AllMatcher(matcher_name="all"),
         processor=LogEntryProcessor(processor_name="log", level="warning"),
     )
@@ -185,7 +186,7 @@ def test_load_config_from_directory_with_yaml_and_yml(tmp_path: Path) -> None:
     yaml_config_path = config_dir / "config1.yaml"
     yaml_rule = Rule(
         name="Yaml Rule",
-        source="saved",
+        source=SavedSource(),
         match=AllMatcher(matcher_name="all"),
         processor=LogEntryProcessor(processor_name="log", level="info"),
     )
@@ -195,7 +196,7 @@ def test_load_config_from_directory_with_yaml_and_yml(tmp_path: Path) -> None:
     yml_config_path = config_dir / "config2.yml"
     yml_rule = Rule(
         name="Yml Rule",
-        source="saved",
+        source=SavedSource(),
         match=StreamIdInMatcher(
             matcher_name="stream_id_in", stream_ids=("feed/test.com/yml",)
         ),
@@ -223,7 +224,7 @@ def test_load_config_with_mixed_paths(tmp_path: Path) -> None:
     dir_yaml_path = config_dir / "dir_config.yaml"
     dir_yaml_rule = Rule(
         name="Dir Yaml Rule",
-        source="saved",
+        source=SavedSource(),
         match=AllMatcher(matcher_name="all"),
         processor=LogEntryProcessor(processor_name="log", level="info"),
     )
@@ -233,7 +234,7 @@ def test_load_config_with_mixed_paths(tmp_path: Path) -> None:
     standalone_yml_path = tmp_path / "standalone_config.yml"
     standalone_yml_rule = Rule(
         name="Standalone Yml Rule",
-        source="saved",
+        source=SavedSource(),
         match=StreamIdInMatcher(
             matcher_name="stream_id_in", stream_ids=("feed/standalone.com/yml",)
         ),

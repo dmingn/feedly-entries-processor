@@ -1,6 +1,7 @@
 rules:
   - name: "Test Rule 1"
-    source: "saved"
+    source:
+      source_name: "saved"
     # Missing 'match' key
     processor:
       processor_name: "log"

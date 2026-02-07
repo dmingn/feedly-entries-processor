@@ -2,7 +2,6 @@
 
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Literal
 
 from pydantic import (
     BaseModel,
@@ -19,13 +18,14 @@ from ruamel.yaml.error import YAMLError
 from feedly_entries_processor.entry_processors import EntryProcessor
 from feedly_entries_processor.exceptions import ConfigError
 from feedly_entries_processor.matchers import Matcher
+from feedly_entries_processor.sources import StreamSource
 
 
 class Rule(BaseModel):
     """Defines a single processing rule for Feedly entries."""
 
     name: str
-    source: Literal["saved"]
+    source: StreamSource = Field(discriminator="source_name")
     match: Matcher = Field(discriminator="matcher_name")
     processor: EntryProcessor = Field(discriminator="processor_name")
     model_config = ConfigDict(frozen=True)
