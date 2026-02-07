@@ -19,12 +19,12 @@ if TYPE_CHECKING:
 def process_entry(entry: Entry, rule: Rule) -> None:
     """Process a single Feedly entry based on a rule."""
     try:
-        if rule.match.is_match(entry):
+        if rule.condition.is_match(entry):
             logger.info(
                 f"Entry '{entry.title}' (URL: {entry.canonical_url}) matched rule '{rule.name}'."
             )
             try:
-                rule.processor.process_entry(entry)
+                rule.action.process_entry(entry)
             except Exception:  # noqa: BLE001
                 logger.exception(
                     f"Error processing entry '{entry.title}' (URL: {entry.canonical_url}) with rule '{rule.name}'."

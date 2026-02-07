@@ -1,19 +1,17 @@
-"""Log entry processor."""
+"""Log action."""
 
 from typing import Literal, assert_never
 
 from logzero import logger
 
-from feedly_entries_processor.entry_processors.base_entry_processor import (
-    BaseEntryProcessor,
-)
+from feedly_entries_processor.actions.base_action import BaseAction
 from feedly_entries_processor.feedly_client import Entry
 
 
-class LogEntryProcessor(BaseEntryProcessor):
-    """A processor that only logs the Feedly entry."""
+class LogAction(BaseAction):
+    """An action that logs the Feedly entry."""
 
-    processor_name: Literal["log"] = "log"
+    action_name: Literal["log"] = "log"
     level: Literal["info", "debug", "warning", "error"] = "info"
 
     def process_entry(self, entry: Entry) -> None:

@@ -1,12 +1,8 @@
-"""Entry processors for Feedly entries."""
+"""Actions for Feedly entries."""
 
-from feedly_entries_processor.entry_processors.log_entry_processor import (
-    LogEntryProcessor,
-)
-from feedly_entries_processor.entry_processors.todoist_entry_processor import (
-    TodoistEntryProcessor,
-)
+from feedly_entries_processor.actions.log_action import LogAction
+from feedly_entries_processor.actions.todoist_action import TodoistAction
 
-__all__ = ["LogEntryProcessor", "TodoistEntryProcessor"]
+__all__ = ["LogAction", "TodoistAction"]
 
-EntryProcessor = LogEntryProcessor | TodoistEntryProcessor
+Action = LogAction | TodoistAction

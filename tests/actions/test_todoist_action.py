@@ -1,4 +1,4 @@
-"""Tests for the TodoistEntryProcessor."""
+"""Tests for the TodoistAction."""
 
 import datetime
 from collections.abc import Callable
@@ -8,9 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from feedly_entries_processor.entry_processors.todoist_entry_processor import (
-    TodoistEntryProcessor,
-)
+from feedly_entries_processor.actions.todoist_action import TodoistAction
 from feedly_entries_processor.feedly_client import Entry, Origin, Summary
 
 
@@ -18,22 +16,24 @@ from feedly_entries_processor.feedly_client import Entry, Origin, Summary
 def mock_todoist_api(mocker: MockerFixture) -> MagicMock:
     """Fixture for mocking TodoistAPI."""
     mock_api: MagicMock = mocker.patch(
-        "feedly_entries_processor.entry_processors.todoist_entry_processor.TodoistAPI"
+        "feedly_entries_processor.actions.todoist_action.TodoistAPI"
     )
     return mock_api
 
 
 @pytest.fixture
-def todoist_processor(mocker: MockerFixture) -> Callable[..., TodoistEntryProcessor]:
-    """Fixture for TodoistEntryProcessor factory."""
+def todoist_action_factory(
+    mocker: MockerFixture,
+) -> Callable[..., TodoistAction]:
+    """Fixture for TodoistAction factory."""
     mocker.patch.dict("os.environ", {"TODOIST_API_TOKEN": "test_token"})
     project_id = "test_project_id"
 
     def _factory(
         due_datetime: datetime.datetime | None = None,
         priority: Literal[1, 2, 3, 4] | None = None,
-    ) -> TodoistEntryProcessor:
-        return TodoistEntryProcessor(
+    ) -> TodoistAction:
+        return TodoistAction(
             project_id=project_id, due_datetime=due_datetime, priority=priority
         )
 
@@ -67,32 +67,33 @@ def entry_builder() -> Callable[..., Entry]:
 
 
 def test_todoist_client_initialized_on_first_access(
-    mock_todoist_api: MagicMock, todoist_processor: Callable[..., TodoistEntryProcessor]
+    mock_todoist_api: MagicMock,
+    todoist_action_factory: Callable[..., TodoistAction],
 ) -> None:
     """Test that the Todoist API client is initialized and cached on first access."""
-    processor = todoist_processor()
-    assert processor._todoist_client is not None  # noqa: SLF001
-    assert processor._todoist_client == mock_todoist_api.return_value  # noqa: SLF001
+    action = todoist_action_factory()
+    assert action._todoist_client is not None  # noqa: SLF001
+    assert action._todoist_client == mock_todoist_api.return_value  # noqa: SLF001
 
 
 def test_process_entry_success(
     mock_todoist_api: MagicMock,
-    todoist_processor: Callable[..., TodoistEntryProcessor],
+    todoist_action_factory: Callable[..., TodoistAction],
     entry_builder: Callable[..., Entry],
 ) -> None:
     """Test successful processing of an entry."""
     sample_entry = entry_builder()
-    processor = todoist_processor()
+    action = todoist_action_factory()
     mock_instance = mock_todoist_api.return_value
     mock_instance.add_task.return_value.id = "task_123"
     mock_instance.add_task.return_value.content = "Test Task"
 
-    processor.process_entry(sample_entry)
+    action.process_entry(sample_entry)
 
     expected_content = "Test Entry - http://example.com/test"
     mock_instance.add_task.assert_called_once_with(
         content=expected_content,
-        project_id=processor.project_id,
+        project_id=action.project_id,
         priority=None,
         due_datetime=None,
         description="Test Summary Content",
@@ -100,35 +101,35 @@ def test_process_entry_success(
 
 
 def test_process_entry_no_canonical_url(
-    todoist_processor: Callable[..., TodoistEntryProcessor],
+    todoist_action_factory: Callable[..., TodoistAction],
     entry_builder: Callable[..., Entry],
 ) -> None:
     """Test processing of an entry without a canonical URL raises an error."""
     entry = entry_builder(
         canonical_url=None, title="Test Entry No URL", summary_content=None
     )
-    processor = todoist_processor()
+    action = todoist_action_factory()
 
     with pytest.raises(
         ValueError,
-        match=r"Entry must have a canonical_url to be processed by TodoistEntryProcessor\.",
+        match=r"Entry must have a canonical_url to be processed by TodoistAction\.",
     ):
-        processor.process_entry(entry)
+        action.process_entry(entry)
 
 
 def test_process_entry_add_task_failure(
     mock_todoist_api: MagicMock,
-    todoist_processor: Callable[..., TodoistEntryProcessor],
+    todoist_action_factory: Callable[..., TodoistAction],
     entry_builder: Callable[..., Entry],
 ) -> None:
     """Test error handling when adding a task fails."""
     sample_entry = entry_builder()
-    processor = todoist_processor()
+    action = todoist_action_factory()
     mock_instance = mock_todoist_api.return_value
     mock_instance.add_task.side_effect = Exception("API Error")
 
     with pytest.raises(Exception, match="API Error"):
-        processor.process_entry(sample_entry)
+        action.process_entry(sample_entry)
 
     mock_instance.add_task.assert_called_once()
 
@@ -136,14 +137,13 @@ def test_process_entry_add_task_failure(
 def test_process_entry_with_optional_params(
     mock_todoist_api: MagicMock,
     entry_builder: Callable[..., Entry],
-    todoist_processor: Callable[..., TodoistEntryProcessor],  # Use the factory
+    todoist_action_factory: Callable[..., TodoistAction],
 ) -> None:
     """Test processing of an entry with optional parameters (due_datetime, priority)."""
     due_datetime = datetime.datetime(2025, 12, 31, 23, 59, 59, tzinfo=datetime.UTC)
     priority: Literal[1, 2, 3, 4] = 2  # Use Literal for type hint
 
-    # Create a new processor instance with the desired optional parameters using the factory
-    processor_with_params = todoist_processor(
+    action_with_params = todoist_action_factory(
         due_datetime=due_datetime, priority=priority
     )
 
@@ -156,12 +156,12 @@ def test_process_entry_with_optional_params(
     mock_instance.add_task.return_value.id = "task_789"
     mock_instance.add_task.return_value.content = "Test Task with Params"
 
-    processor_with_params.process_entry(entry)
+    action_with_params.process_entry(entry)
 
     expected_content = "Entry with Params - http://example.com/params"
     mock_instance.add_task.assert_called_once_with(
         content=expected_content,
-        project_id=processor_with_params.project_id,
+        project_id=action_with_params.project_id,
         priority=priority,
         due_datetime=due_datetime,
         description="Summary for params",

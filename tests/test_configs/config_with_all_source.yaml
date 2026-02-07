@@ -2,8 +2,8 @@ rules:
   - name: "Log Rule from All feed"
     source:
       source_name: "all"
-    match:
-      matcher_name: "all"
-    processor:
-      processor_name: "log"
+    condition:
+      condition_name: "all"
+    action:
+      action_name: "log"
       level: "info"

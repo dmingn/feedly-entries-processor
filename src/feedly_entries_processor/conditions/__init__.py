@@ -1,8 +1,10 @@
-"""Matchers for filtering Feedly entries."""
+"""Conditions for filtering Feedly entries."""
 
-from feedly_entries_processor.matchers.all_matcher import AllMatcher
-from feedly_entries_processor.matchers.stream_id_in_matcher import StreamIdInMatcher
+from feedly_entries_processor.conditions.all_condition import AllCondition
+from feedly_entries_processor.conditions.stream_id_in_condition import (
+    StreamIdInCondition,
+)
 
-__all__ = ["AllMatcher", "StreamIdInMatcher"]
+__all__ = ["AllCondition", "StreamIdInCondition"]
 
-Matcher = AllMatcher | StreamIdInMatcher
+Condition = AllCondition | StreamIdInCondition

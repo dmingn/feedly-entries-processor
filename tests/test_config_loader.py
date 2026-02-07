@@ -7,15 +7,15 @@ from pydantic import ValidationError
 from pydantic_yaml import to_yaml_str
 from ruamel.yaml.error import YAMLError
 
+from feedly_entries_processor.actions import LogAction
+from feedly_entries_processor.conditions import AllCondition, StreamIdInCondition
 from feedly_entries_processor.config_loader import (
     Config,
     Rule,
     load_config,
     load_config_file,
 )
-from feedly_entries_processor.entry_processors import LogEntryProcessor
 from feedly_entries_processor.exceptions import ConfigError
-from feedly_entries_processor.matchers import AllMatcher, StreamIdInMatcher
 from feedly_entries_processor.sources import AllSource, SavedSource
 
 
@@ -64,16 +64,17 @@ def test_load_config_file_success(valid_config_file: Path) -> None:
                 Rule(
                     name="Log Rule for Stream ID",
                     source=SavedSource(),
-                    match=StreamIdInMatcher(
-                        matcher_name="stream_id_in", stream_ids=("feed/test.com/3",)
+                    condition=StreamIdInCondition(
+                        condition_name="stream_id_in",
+                        stream_ids=("feed/test.com/3",),
                     ),
-                    processor=LogEntryProcessor(processor_name="log", level="info"),
+                    action=LogAction(action_name="log", level="info"),
                 ),
                 Rule(
                     name="Log Rule for All Matcher",
                     source=SavedSource(),
-                    match=AllMatcher(matcher_name="all"),
-                    processor=LogEntryProcessor(processor_name="log", level="debug"),
+                    condition=AllCondition(condition_name="all"),
+                    action=LogAction(action_name="log", level="debug"),
                 ),
             )
         )
@@ -123,13 +124,11 @@ def test_save_config_and_load_back(tmp_path: Path) -> None:
             Rule(
                 name="Saved Rule",
                 source=SavedSource(),
-                match=StreamIdInMatcher(
-                    matcher_name="stream_id_in", stream_ids=("feed/saved.com/1",)
+                condition=StreamIdInCondition(
+                    condition_name="stream_id_in",
+                    stream_ids=("feed/saved.com/1",),
                 ),
-                processor=LogEntryProcessor(
-                    processor_name="log",
-                    level="info",
-                ),
+                action=LogAction(action_name="log", level="info"),
             ),
         )
     )
@@ -147,22 +146,22 @@ def test_config_or_operator() -> None:
     rule1 = Rule(
         name="Rule 1",
         source=SavedSource(),
-        match=AllMatcher(matcher_name="all"),
-        processor=LogEntryProcessor(processor_name="log", level="info"),
+        condition=AllCondition(condition_name="all"),
+        action=LogAction(action_name="log", level="info"),
     )
     rule2 = Rule(
         name="Rule 2",
         source=SavedSource(),
-        match=StreamIdInMatcher(
-            matcher_name="stream_id_in", stream_ids=("feed/test.com/1",)
+        condition=StreamIdInCondition(
+            condition_name="stream_id_in", stream_ids=("feed/test.com/1",)
         ),
-        processor=LogEntryProcessor(processor_name="log", level="debug"),
+        action=LogAction(action_name="log", level="debug"),
     )
     common_rule = Rule(
         name="Common Rule",
         source=SavedSource(),
-        match=AllMatcher(matcher_name="all"),
-        processor=LogEntryProcessor(processor_name="log", level="warning"),
+        condition=AllCondition(condition_name="all"),
+        action=LogAction(action_name="log", level="warning"),
     )
 
     config1 = Config(rules=frozenset([rule1]))
@@ -198,8 +197,8 @@ def test_load_config_from_directory_with_yaml_and_yml(tmp_path: Path) -> None:
     yaml_rule = Rule(
         name="Yaml Rule",
         source=SavedSource(),
-        match=AllMatcher(matcher_name="all"),
-        processor=LogEntryProcessor(processor_name="log", level="info"),
+        condition=AllCondition(condition_name="all"),
+        action=LogAction(action_name="log", level="info"),
     )
     _save_config(Config(rules=frozenset([yaml_rule])), yaml_config_path)
 
@@ -208,10 +207,10 @@ def test_load_config_from_directory_with_yaml_and_yml(tmp_path: Path) -> None:
     yml_rule = Rule(
         name="Yml Rule",
         source=SavedSource(),
-        match=StreamIdInMatcher(
-            matcher_name="stream_id_in", stream_ids=("feed/test.com/yml",)
+        condition=StreamIdInCondition(
+            condition_name="stream_id_in", stream_ids=("feed/test.com/yml",)
         ),
-        processor=LogEntryProcessor(processor_name="log", level="debug"),
+        action=LogAction(action_name="log", level="debug"),
     )
     _save_config(Config(rules=frozenset([yml_rule])), yml_config_path)
 
@@ -236,8 +235,8 @@ def test_load_config_with_mixed_paths(tmp_path: Path) -> None:
     dir_yaml_rule = Rule(
         name="Dir Yaml Rule",
         source=SavedSource(),
-        match=AllMatcher(matcher_name="all"),
-        processor=LogEntryProcessor(processor_name="log", level="info"),
+        condition=AllCondition(condition_name="all"),
+        action=LogAction(action_name="log", level="info"),
     )
     _save_config(Config(rules=frozenset([dir_yaml_rule])), dir_yaml_path)
 
@@ -246,10 +245,11 @@ def test_load_config_with_mixed_paths(tmp_path: Path) -> None:
     standalone_yml_rule = Rule(
         name="Standalone Yml Rule",
         source=SavedSource(),
-        match=StreamIdInMatcher(
-            matcher_name="stream_id_in", stream_ids=("feed/standalone.com/yml",)
+        condition=StreamIdInCondition(
+            condition_name="stream_id_in",
+            stream_ids=("feed/standalone.com/yml",),
         ),
-        processor=LogEntryProcessor(processor_name="log", level="debug"),
+        action=LogAction(action_name="log", level="debug"),
     )
     _save_config(Config(rules=frozenset([standalone_yml_rule])), standalone_yml_path)
 

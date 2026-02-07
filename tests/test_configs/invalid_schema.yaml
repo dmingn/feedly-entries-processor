@@ -2,7 +2,7 @@ rules:
   - name: "Test Rule 1"
     source:
       source_name: "saved"
-    # Missing 'match' key
-    processor:
-      processor_name: "log"
+    # Missing 'condition' key
+    action:
+      action_name: "log"
       level: "info"

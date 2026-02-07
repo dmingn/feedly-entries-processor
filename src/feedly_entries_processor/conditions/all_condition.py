@@ -1,16 +1,16 @@
-"""AllMatcher module."""
+"""AllCondition module."""
 
 from typing import Literal
 
+from feedly_entries_processor.conditions.base_condition import BaseCondition
 from feedly_entries_processor.feedly_client import Entry
-from feedly_entries_processor.matchers.base_matcher import BaseMatcher
 
 
-class AllMatcher(BaseMatcher):
-    """Matcher for all entries."""
+class AllCondition(BaseCondition):
+    """Condition that matches all entries."""
 
-    matcher_name: Literal["all"]
+    condition_name: Literal["all"]
 
     def is_match(self, entry: Entry) -> bool:  # noqa: ARG002
-        """Check if the entry matches (always true for AllMatcher)."""
+        """Check if the entry matches (always true for AllCondition)."""
         return True

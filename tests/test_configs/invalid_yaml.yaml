@@ -2,8 +2,8 @@ rules:
   - name: "Invalid YAML: missing colon"
     source:
       source_name: "saved"
-    match # Missing colon
-      matcher_name: "all"
-    processor:
-      processor_name: "log"
+    condition # Missing colon
+      condition_name: "all"
+    action:
+      action_name: "log"
       level: "debug"
