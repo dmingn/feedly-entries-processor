@@ -1,4 +1,4 @@
-"""Tests for the TodoistAction."""
+"""Tests for the AddTodoistTaskAction."""
 
 import datetime
 from collections.abc import Callable
@@ -8,7 +8,9 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from feedly_entries_processor.actions.todoist_action import TodoistAction
+from feedly_entries_processor.actions.add_todoist_task_action import (
+    AddTodoistTaskAction,
+)
 from feedly_entries_processor.feedly_client import Entry, Origin, Summary
 
 
@@ -16,24 +18,24 @@ from feedly_entries_processor.feedly_client import Entry, Origin, Summary
 def mock_todoist_api(mocker: MockerFixture) -> MagicMock:
     """Fixture for mocking TodoistAPI."""
     mock_api: MagicMock = mocker.patch(
-        "feedly_entries_processor.actions.todoist_action.TodoistAPI"
+        "feedly_entries_processor.actions.add_todoist_task_action.TodoistAPI"
     )
     return mock_api
 
 
 @pytest.fixture
-def todoist_action_factory(
+def add_todoist_task_action_factory(
     mocker: MockerFixture,
-) -> Callable[..., TodoistAction]:
-    """Fixture for TodoistAction factory."""
+) -> Callable[..., AddTodoistTaskAction]:
+    """Fixture for AddTodoistTaskAction factory."""
     mocker.patch.dict("os.environ", {"TODOIST_API_TOKEN": "test_token"})
     project_id = "test_project_id"
 
     def _factory(
         due_datetime: datetime.datetime | None = None,
         priority: Literal[1, 2, 3, 4] | None = None,
-    ) -> TodoistAction:
-        return TodoistAction(
+    ) -> AddTodoistTaskAction:
+        return AddTodoistTaskAction(
             project_id=project_id, due_datetime=due_datetime, priority=priority
         )
 
@@ -68,22 +70,22 @@ def entry_builder() -> Callable[..., Entry]:
 
 def test_todoist_client_initialized_on_first_access(
     mock_todoist_api: MagicMock,
-    todoist_action_factory: Callable[..., TodoistAction],
+    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
 ) -> None:
     """Test that the Todoist API client is initialized and cached on first access."""
-    action = todoist_action_factory()
+    action = add_todoist_task_action_factory()
     assert action._todoist_client is not None  # noqa: SLF001
     assert action._todoist_client == mock_todoist_api.return_value  # noqa: SLF001
 
 
 def test_process_entry_success(
     mock_todoist_api: MagicMock,
-    todoist_action_factory: Callable[..., TodoistAction],
+    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
     entry_builder: Callable[..., Entry],
 ) -> None:
     """Test successful processing of an entry."""
     sample_entry = entry_builder()
-    action = todoist_action_factory()
+    action = add_todoist_task_action_factory()
     mock_instance = mock_todoist_api.return_value
     mock_instance.add_task.return_value.id = "task_123"
     mock_instance.add_task.return_value.content = "Test Task"
@@ -101,30 +103,30 @@ def test_process_entry_success(
 
 
 def test_process_entry_no_canonical_url(
-    todoist_action_factory: Callable[..., TodoistAction],
+    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
     entry_builder: Callable[..., Entry],
 ) -> None:
     """Test processing of an entry without a canonical URL raises an error."""
     entry = entry_builder(
         canonical_url=None, title="Test Entry No URL", summary_content=None
     )
-    action = todoist_action_factory()
+    action = add_todoist_task_action_factory()
 
     with pytest.raises(
         ValueError,
-        match=r"Entry must have a canonical_url to be processed by TodoistAction\.",
+        match=r"Entry must have a canonical_url to be processed by AddTodoistTaskAction\.",
     ):
         action.process_entry(entry)
 
 
 def test_process_entry_add_task_failure(
     mock_todoist_api: MagicMock,
-    todoist_action_factory: Callable[..., TodoistAction],
+    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
     entry_builder: Callable[..., Entry],
 ) -> None:
     """Test error handling when adding a task fails."""
     sample_entry = entry_builder()
-    action = todoist_action_factory()
+    action = add_todoist_task_action_factory()
     mock_instance = mock_todoist_api.return_value
     mock_instance.add_task.side_effect = Exception("API Error")
 
@@ -137,13 +139,13 @@ def test_process_entry_add_task_failure(
 def test_process_entry_with_optional_params(
     mock_todoist_api: MagicMock,
     entry_builder: Callable[..., Entry],
-    todoist_action_factory: Callable[..., TodoistAction],
+    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
 ) -> None:
     """Test processing of an entry with optional parameters (due_datetime, priority)."""
     due_datetime = datetime.datetime(2025, 12, 31, 23, 59, 59, tzinfo=datetime.UTC)
     priority: Literal[1, 2, 3, 4] = 2  # Use Literal for type hint
 
-    action_with_params = todoist_action_factory(
+    action_with_params = add_todoist_task_action_factory(
         due_datetime=due_datetime, priority=priority
     )
 
