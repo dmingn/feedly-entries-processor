@@ -1,4 +1,4 @@
-"""Todoist entry processor."""
+"""Add Todoist task action."""
 
 import datetime
 import os
@@ -8,16 +8,14 @@ from typing import Literal
 from logzero import logger
 from todoist_api_python.api import TodoistAPI
 
-from feedly_entries_processor.entry_processors.base_entry_processor import (
-    BaseEntryProcessor,
-)
+from feedly_entries_processor.actions.base_action import BaseAction
 from feedly_entries_processor.feedly_client import Entry
 
 
-class TodoistEntryProcessor(BaseEntryProcessor):
-    """A processor that saves Feedly entries as tasks in Todoist."""
+class AddTodoistTaskAction(BaseAction):
+    """An action that adds Feedly entries as tasks in Todoist."""
 
-    processor_name: Literal["todoist"] = "todoist"
+    name: Literal["add_todoist_task"] = "add_todoist_task"
     project_id: str
     due_datetime: datetime.datetime | None = None
     priority: Literal[1, 2, 3, 4] | None = None
@@ -31,10 +29,10 @@ class TodoistEntryProcessor(BaseEntryProcessor):
             raise ValueError(error_message)
         return TodoistAPI(api_token)
 
-    def process_entry(self, entry: Entry) -> None:
+    def process(self, entry: Entry) -> None:
         """Process a Feedly entry by adding it as a task to Todoist."""
         if entry.canonical_url is None:
-            error_message = "Entry must have a canonical_url to be processed by TodoistEntryProcessor."
+            error_message = "Entry must have a canonical_url to be processed by AddTodoistTaskAction."
             raise ValueError(error_message)
 
         task_content = f"{entry.title} - {entry.canonical_url}"

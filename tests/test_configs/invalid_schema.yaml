@@ -1,8 +1,8 @@
 rules:
   - name: "Test Rule 1"
     source:
-      source_name: "saved"
-    # Missing 'match' key
-    processor:
-      processor_name: "log"
+      name: "saved"
+    # Missing 'condition' key
+    action:
+      name: "log"
       level: "info"

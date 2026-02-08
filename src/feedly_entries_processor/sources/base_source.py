@@ -11,7 +11,7 @@ from feedly_entries_processor.feedly_client import Entry, FeedlyClient
 class BaseStreamSource(ABC, BaseModel):
     """Base class for stream sources that fetch entries from Feedly."""
 
-    source_name: str
+    name: str
     model_config = ConfigDict(frozen=True)
 
     @abstractmethod

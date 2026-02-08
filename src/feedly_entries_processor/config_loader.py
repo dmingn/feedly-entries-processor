@@ -15,9 +15,9 @@ from pydantic import (
 from pydantic_yaml import parse_yaml_raw_as
 from ruamel.yaml.error import YAMLError
 
-from feedly_entries_processor.entry_processors import EntryProcessor
+from feedly_entries_processor.actions import Action
+from feedly_entries_processor.conditions import Condition
 from feedly_entries_processor.exceptions import ConfigError
-from feedly_entries_processor.matchers import Matcher
 from feedly_entries_processor.sources import StreamSource
 
 
@@ -25,9 +25,9 @@ class Rule(BaseModel):
     """Defines a single processing rule for Feedly entries."""
 
     name: str
-    source: StreamSource = Field(discriminator="source_name")
-    match: Matcher = Field(discriminator="matcher_name")
-    processor: EntryProcessor = Field(discriminator="processor_name")
+    source: StreamSource = Field(discriminator="name")
+    condition: Condition = Field(discriminator="name")
+    action: Action = Field(discriminator="name")
     model_config = ConfigDict(frozen=True)
 
 
