@@ -3,7 +3,7 @@ rules:
     source:
       source_name: "all"
     condition:
-      condition_name: "all"
+      condition_name: "match_all"
     action:
       action_name: "log"
       level: "info"

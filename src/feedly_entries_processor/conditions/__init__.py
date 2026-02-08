@@ -1,10 +1,12 @@
 """Conditions for filtering Feedly entries."""
 
-from feedly_entries_processor.conditions.all_condition import AllCondition
-from feedly_entries_processor.conditions.stream_id_in_condition import (
-    StreamIdInCondition,
+from feedly_entries_processor.conditions.match_all_condition import (
+    MatchAllCondition,
+)
+from feedly_entries_processor.conditions.stream_id_in_list_condition import (
+    StreamIdInListCondition,
 )
 
-__all__ = ["AllCondition", "StreamIdInCondition"]
+__all__ = ["MatchAllCondition", "StreamIdInListCondition"]
 
-Condition = AllCondition | StreamIdInCondition
+Condition = MatchAllCondition | StreamIdInListCondition

@@ -3,7 +3,7 @@ rules:
     source:
       source_name: "saved"
     condition:
-      condition_name: "stream_id_in"
+      condition_name: "stream_id_in_list"
       stream_ids:
         - "feed/test.com/3"
     action:
@@ -14,7 +14,7 @@ rules:
     source:
       source_name: "saved"
     condition:
-      condition_name: "all"
+      condition_name: "match_all"
     action:
       action_name: "log"
       level: "debug"

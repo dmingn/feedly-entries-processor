@@ -7,7 +7,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from feedly_entries_processor.actions import LogAction
-from feedly_entries_processor.conditions import AllCondition
+from feedly_entries_processor.conditions import MatchAllCondition
 from feedly_entries_processor.config_loader import Rule
 from feedly_entries_processor.feedly_client import Entry
 from feedly_entries_processor.process import process_entries, process_entry
@@ -26,10 +26,10 @@ def mock_entry() -> Entry:
 
 
 @pytest.fixture
-def mock_condition(mocker: MockerFixture) -> AllCondition:
-    """Fixture for a mock AllCondition."""
-    mock = mocker.create_autospec(AllCondition)
-    mock.condition_name = "all"
+def mock_condition(mocker: MockerFixture) -> MatchAllCondition:
+    """Fixture for a mock MatchAllCondition."""
+    mock = mocker.create_autospec(MatchAllCondition)
+    mock.condition_name = "match_all"
     return mock
 
 
@@ -42,7 +42,7 @@ def mock_action(mocker: MockerFixture) -> LogAction:
 
 
 @pytest.fixture
-def mock_rule(mock_condition: AllCondition, mock_action: LogAction) -> Rule:
+def mock_rule(mock_condition: MatchAllCondition, mock_action: LogAction) -> Rule:
     """Fixture for a mock Rule."""
     return Rule(
         name="test-rule",
