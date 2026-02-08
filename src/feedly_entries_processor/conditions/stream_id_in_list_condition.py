@@ -9,7 +9,7 @@ from feedly_entries_processor.feedly_client import Entry
 class StreamIdInListCondition(BaseCondition):
     """Condition that matches when stream_id is in a given set."""
 
-    condition_name: Literal["stream_id_in_list"]
+    condition_name: Literal["stream_id_in_list"] = "stream_id_in_list"
     stream_ids: frozenset[str]
 
     def matches(self, entry: Entry) -> bool:
