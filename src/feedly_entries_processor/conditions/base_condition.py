@@ -13,5 +13,5 @@ class BaseCondition(ABC, BaseModel):
     model_config = ConfigDict(frozen=True)
 
     @abstractmethod
-    def is_match(self, entry: Entry) -> bool:
-        """Abstract method to check if an entry matches the condition."""
+    def matches(self, entry: Entry) -> bool:
+        """Return True if the entry matches the condition."""

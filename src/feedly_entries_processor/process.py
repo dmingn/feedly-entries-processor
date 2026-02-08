@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 def process_entry(entry: Entry, rule: Rule) -> None:
     """Process a single Feedly entry based on a rule."""
     try:
-        if rule.condition.is_match(entry):
+        if rule.condition.matches(entry):
             logger.info(
                 f"Entry '{entry.title}' (URL: {entry.canonical_url}) matched rule '{rule.name}'."
             )

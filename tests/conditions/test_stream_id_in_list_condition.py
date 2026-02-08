@@ -7,7 +7,7 @@ from feedly_entries_processor.conditions import StreamIdInListCondition
 from feedly_entries_processor.feedly_client import Entry
 
 
-def test_stream_id_in_list_condition_is_match_with_origin(
+def test_stream_id_in_list_condition_matches_with_origin(
     mock_entry_with_origin: Entry,
 ) -> None:
     """Test StreamIdInListCondition when entry has origin and stream_id is in list."""
@@ -15,10 +15,10 @@ def test_stream_id_in_list_condition_is_match_with_origin(
         condition_name="stream_id_in_list",
         stream_ids=("feed/test.com/1", "feed/test.com/2"),
     )
-    assert condition.is_match(mock_entry_with_origin) is True
+    assert condition.matches(mock_entry_with_origin) is True
 
 
-def test_stream_id_in_list_condition_is_match_not_in_list(
+def test_stream_id_in_list_condition_matches_not_in_list(
     mock_entry_with_origin: Entry,
 ) -> None:
     """Test StreamIdInListCondition when entry has origin and stream_id is not in list."""
@@ -26,10 +26,10 @@ def test_stream_id_in_list_condition_is_match_not_in_list(
         condition_name="stream_id_in_list",
         stream_ids=("feed/test.com/99",),
     )
-    assert condition.is_match(mock_entry_with_origin) is False
+    assert condition.matches(mock_entry_with_origin) is False
 
 
-def test_stream_id_in_list_condition_is_match_without_origin(
+def test_stream_id_in_list_condition_matches_without_origin(
     mock_entry_without_origin: Entry,
 ) -> None:
     """Test StreamIdInListCondition when entry does not have origin."""
@@ -37,7 +37,7 @@ def test_stream_id_in_list_condition_is_match_without_origin(
         condition_name="stream_id_in_list",
         stream_ids=("feed/test.com/1",),
     )
-    assert condition.is_match(mock_entry_without_origin) is False
+    assert condition.matches(mock_entry_without_origin) is False
 
 
 def test_stream_id_in_list_condition_pydantic_instantiation() -> None:

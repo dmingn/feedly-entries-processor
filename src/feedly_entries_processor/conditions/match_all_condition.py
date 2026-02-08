@@ -11,6 +11,6 @@ class MatchAllCondition(BaseCondition):
 
     condition_name: Literal["match_all"]
 
-    def is_match(self, entry: Entry) -> bool:  # noqa: ARG002
-        """Check if the entry matches (always true for MatchAllCondition)."""
+    def matches(self, entry: Entry) -> bool:  # noqa: ARG002
+        """Return True (always true for MatchAllCondition)."""
         return True

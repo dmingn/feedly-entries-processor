@@ -12,6 +12,6 @@ class StreamIdInListCondition(BaseCondition):
     condition_name: Literal["stream_id_in_list"]
     stream_ids: tuple[str, ...]
 
-    def is_match(self, entry: Entry) -> bool:
-        """Check if the entry's stream_id is in the provided list."""
+    def matches(self, entry: Entry) -> bool:
+        """Return True if the entry's stream_id is in the provided list."""
         return entry.origin is not None and entry.origin.stream_id in self.stream_ids
