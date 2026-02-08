@@ -21,6 +21,8 @@ from feedly_entries_processor.config_loader import (
 from feedly_entries_processor.exceptions import ConfigError
 from feedly_entries_processor.sources import AllSource, SavedSource
 
+TEST_CONFIGS_PATH = Path(__file__).parent / "test_configs"
+
 
 def _save_config(config: Config, file_path: Path) -> None:
     """Save the configuration to a YAML file.
@@ -35,7 +37,7 @@ def _save_config(config: Config, file_path: Path) -> None:
 @pytest.fixture
 def test_configs_path() -> Path:
     """Provide the base path to the test configuration files directory."""
-    return Path(__file__).parent / "test_configs"
+    return TEST_CONFIGS_PATH
 
 
 @pytest.fixture
@@ -44,16 +46,37 @@ def valid_config_file(test_configs_path: Path) -> Path:
     return test_configs_path / "valid_config.yaml"
 
 
-@pytest.fixture
-def invalid_yaml_file(test_configs_path: Path) -> Path:
-    """Provide a path to an invalid YAML file."""
-    return test_configs_path / "invalid_yaml.yaml"
-
-
-@pytest.fixture
-def invalid_schema_file(test_configs_path: Path) -> Path:
-    """Provide a path to a YAML file with invalid schema."""
-    return test_configs_path / "invalid_schema.yaml"
+@pytest.mark.parametrize(
+    ("path", "cause_type", "message_contains"),
+    [
+        pytest.param(
+            TEST_CONFIGS_PATH / "invalid_yaml.yaml", YAMLError, None, id="invalid_yaml"
+        ),
+        pytest.param(
+            TEST_CONFIGS_PATH / "invalid_schema.yaml",
+            ValidationError,
+            "Field required",
+            id="invalid_schema",
+        ),
+        pytest.param(
+            TEST_CONFIGS_PATH / "non_existent.yaml",
+            ValidationError,
+            "Path does not point to a file",
+            id="file_not_found",
+        ),
+    ],
+)
+def test_load_config_file_failure(
+    path: Path,
+    cause_type: type[Exception],
+    message_contains: str | None,
+) -> None:
+    """Test that ConfigError is raised for invalid YAML, invalid schema, or missing file."""
+    with pytest.raises(ConfigError) as exc_info:
+        load_config_file(path)
+    assert isinstance(exc_info.value.__cause__, cause_type)
+    if message_contains is not None:
+        assert message_contains in str(exc_info.value.__cause__)
 
 
 def test_load_config_file_success(valid_config_file: Path) -> None:
@@ -94,30 +117,6 @@ def test_load_config_file_with_all_source(test_configs_path: Path) -> None:
     rule = next(iter(config.rules))
     assert rule.source == AllSource()
     assert rule.name == "Log Rule from All feed"
-
-
-def test_load_config_file_file_not_found(tmp_path: Path) -> None:
-    """Test that ConfigError is raised for a non-existent file."""
-    non_existent_file = tmp_path / "non_existent.yaml"
-    with pytest.raises(ConfigError) as exc_info:
-        load_config_file(non_existent_file)
-    assert isinstance(exc_info.value.__cause__, ValidationError)
-    assert "Path does not point to a file" in str(exc_info.value.__cause__)
-
-
-def test_load_config_file_invalid_yaml(invalid_yaml_file: Path) -> None:
-    """Test that ConfigError is raised for an invalid YAML file."""
-    with pytest.raises(ConfigError) as exc_info:
-        load_config_file(invalid_yaml_file)
-    assert isinstance(exc_info.value.__cause__, YAMLError)
-
-
-def test_load_config_file_invalid_schema(invalid_schema_file: Path) -> None:
-    """Test that ConfigError is raised for a YAML file with invalid schema."""
-    with pytest.raises(ConfigError) as exc_info:
-        load_config_file(invalid_schema_file)
-    assert isinstance(exc_info.value.__cause__, ValidationError)
-    assert "Field required" in str(exc_info.value.__cause__)
 
 
 def test_save_config_and_load_back(tmp_path: Path) -> None:
