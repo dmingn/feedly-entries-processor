@@ -62,9 +62,7 @@ def test_process_entry_calls_action_when_rule_matches(
     process_entry(mock_entry, mock_rule)
 
     cast("MagicMock", mock_rule.condition).matches.assert_called_once_with(mock_entry)
-    cast("MagicMock", mock_rule.action).process_entry.assert_called_once_with(
-        mock_entry
-    )
+    cast("MagicMock", mock_rule.action).process.assert_called_once_with(mock_entry)
 
 
 def test_process_entry_does_not_call_action_when_rule_does_not_match(
@@ -77,7 +75,7 @@ def test_process_entry_does_not_call_action_when_rule_does_not_match(
     process_entry(mock_entry, mock_rule)
 
     cast("MagicMock", mock_rule.condition).matches.assert_called_once_with(mock_entry)
-    cast("MagicMock", mock_rule.action).process_entry.assert_not_called()
+    cast("MagicMock", mock_rule.action).process.assert_not_called()
 
 
 def test_process_entry_handles_exception_in_matches(
@@ -96,7 +94,7 @@ def test_process_entry_handles_exception_in_matches(
     process_entry(mock_entry, mock_rule)
 
     cast("MagicMock", mock_rule.condition).matches.assert_called_once_with(mock_entry)
-    cast("MagicMock", mock_rule.action).process_entry.assert_not_called()
+    cast("MagicMock", mock_rule.action).process.assert_not_called()
     mock_logger_exception.assert_called_once()
 
 
@@ -107,7 +105,7 @@ def test_process_entry_handles_exception_in_action(
 ) -> None:
     """Test that process_entry handles exceptions raised by the action."""
     cast("MagicMock", mock_rule.condition).matches.return_value = True
-    cast("MagicMock", mock_rule.action).process_entry.side_effect = Exception(
+    cast("MagicMock", mock_rule.action).process.side_effect = Exception(
         "Test exception"
     )
     mock_logger_exception = mocker.patch(
@@ -117,9 +115,7 @@ def test_process_entry_handles_exception_in_action(
     process_entry(mock_entry, mock_rule)
 
     cast("MagicMock", mock_rule.condition).matches.assert_called_once_with(mock_entry)
-    cast("MagicMock", mock_rule.action).process_entry.assert_called_once_with(
-        mock_entry
-    )
+    cast("MagicMock", mock_rule.action).process.assert_called_once_with(mock_entry)
     mock_logger_exception.assert_called_once()
 
 

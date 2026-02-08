@@ -90,7 +90,7 @@ def test_process_entry_success(
     mock_instance.add_task.return_value.id = "task_123"
     mock_instance.add_task.return_value.content = "Test Task"
 
-    action.process_entry(sample_entry)
+    action.process(sample_entry)
 
     expected_content = "Test Entry - http://example.com/test"
     mock_instance.add_task.assert_called_once_with(
@@ -116,7 +116,7 @@ def test_process_entry_no_canonical_url(
         ValueError,
         match=r"Entry must have a canonical_url to be processed by AddTodoistTaskAction\.",
     ):
-        action.process_entry(entry)
+        action.process(entry)
 
 
 def test_process_entry_add_task_failure(
@@ -131,7 +131,7 @@ def test_process_entry_add_task_failure(
     mock_instance.add_task.side_effect = Exception("API Error")
 
     with pytest.raises(Exception, match="API Error"):
-        action.process_entry(sample_entry)
+        action.process(sample_entry)
 
     mock_instance.add_task.assert_called_once()
 
@@ -158,7 +158,7 @@ def test_process_entry_with_optional_params(
     mock_instance.add_task.return_value.id = "task_789"
     mock_instance.add_task.return_value.content = "Test Task with Params"
 
-    action_with_params.process_entry(entry)
+    action_with_params.process(entry)
 
     expected_content = "Entry with Params - http://example.com/params"
     mock_instance.add_task.assert_called_once_with(

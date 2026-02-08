@@ -29,7 +29,7 @@ class AddTodoistTaskAction(BaseAction):
             raise ValueError(error_message)
         return TodoistAPI(api_token)
 
-    def process_entry(self, entry: Entry) -> None:
+    def process(self, entry: Entry) -> None:
         """Process a Feedly entry by adding it as a task to Todoist."""
         if entry.canonical_url is None:
             error_message = "Entry must have a canonical_url to be processed by AddTodoistTaskAction."

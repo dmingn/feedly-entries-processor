@@ -50,15 +50,15 @@ def test_log_action_default_level() -> None:
         ("error", "error"),
     ],
 )
-def test_log_action_process_entry(
+def test_log_action_process(
     level: Literal["info", "debug", "warning", "error"],
     expected_log_method: str,
     mock_logger: MagicMock,
     mock_entry: Entry,
 ) -> None:
-    """Test that process_entry logs at the correct level."""
+    """Test that process logs at the correct level."""
     action = LogAction(level=level)
-    action.process_entry(mock_entry)
+    action.process(mock_entry)
 
     log_message = (
         f"Processing entry: {mock_entry.title} (URL: {mock_entry.canonical_url})"

@@ -13,5 +13,5 @@ class BaseAction(ABC, BaseModel):
     model_config = ConfigDict(frozen=True)
 
     @abstractmethod
-    def process_entry(self, entry: Entry) -> None:
+    def process(self, entry: Entry) -> None:
         """Process a single Feedly entry."""

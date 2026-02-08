@@ -24,7 +24,7 @@ def process_entry(entry: Entry, rule: Rule) -> None:
                 f"Entry '{entry.title}' (URL: {entry.canonical_url}) matched rule '{rule.name}'."
             )
             try:
-                rule.action.process_entry(entry)
+                rule.action.process(entry)
             except Exception:  # noqa: BLE001
                 logger.exception(
                     f"Error processing entry '{entry.title}' (URL: {entry.canonical_url}) with rule '{rule.name}'."
