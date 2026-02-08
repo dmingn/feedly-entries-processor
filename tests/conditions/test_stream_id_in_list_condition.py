@@ -13,7 +13,7 @@ def test_stream_id_in_list_condition_matches_with_origin(
     """Test StreamIdInListCondition when entry has origin and stream_id is in list."""
     condition = StreamIdInListCondition(
         condition_name="stream_id_in_list",
-        stream_ids=("feed/test.com/1", "feed/test.com/2"),
+        stream_ids=frozenset({"feed/test.com/1", "feed/test.com/2"}),
     )
     assert condition.matches(mock_entry_with_origin) is True
 
@@ -24,7 +24,7 @@ def test_stream_id_in_list_condition_matches_not_in_list(
     """Test StreamIdInListCondition when entry has origin and stream_id is not in list."""
     condition = StreamIdInListCondition(
         condition_name="stream_id_in_list",
-        stream_ids=("feed/test.com/99",),
+        stream_ids=frozenset({"feed/test.com/99"}),
     )
     assert condition.matches(mock_entry_with_origin) is False
 
@@ -35,7 +35,7 @@ def test_stream_id_in_list_condition_matches_without_origin(
     """Test StreamIdInListCondition when entry does not have origin."""
     condition = StreamIdInListCondition(
         condition_name="stream_id_in_list",
-        stream_ids=("feed/test.com/1",),
+        stream_ids=frozenset({"feed/test.com/1"}),
     )
     assert condition.matches(mock_entry_without_origin) is False
 
@@ -45,12 +45,12 @@ def test_stream_id_in_list_condition_pydantic_instantiation() -> None:
     condition = StreamIdInListCondition.model_validate(
         {
             "condition_name": "stream_id_in_list",
-            "stream_ids": ("feed/test.com/1", "feed/test.com/2"),
+            "stream_ids": ["feed/test.com/1", "feed/test.com/2"],
         }
     )
     assert isinstance(condition, StreamIdInListCondition)
     assert condition.condition_name == "stream_id_in_list"
-    assert condition.stream_ids == ("feed/test.com/1", "feed/test.com/2")
+    assert condition.stream_ids == frozenset({"feed/test.com/1", "feed/test.com/2"})
 
 
 def test_stream_id_in_list_condition_pydantic_validation_error() -> None:

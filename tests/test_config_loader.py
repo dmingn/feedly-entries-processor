@@ -69,7 +69,7 @@ def test_load_config_file_success(valid_config_file: Path) -> None:
                     source=SavedSource(),
                     condition=StreamIdInListCondition(
                         condition_name="stream_id_in_list",
-                        stream_ids=("feed/test.com/3",),
+                        stream_ids=frozenset({"feed/test.com/3"}),
                     ),
                     action=LogAction(action_name="log", level="info"),
                 ),
@@ -129,7 +129,7 @@ def test_save_config_and_load_back(tmp_path: Path) -> None:
                 source=SavedSource(),
                 condition=StreamIdInListCondition(
                     condition_name="stream_id_in_list",
-                    stream_ids=("feed/saved.com/1",),
+                    stream_ids=frozenset({"feed/saved.com/1"}),
                 ),
                 action=LogAction(action_name="log", level="info"),
             ),
@@ -157,7 +157,7 @@ def test_config_or_operator() -> None:
         source=SavedSource(),
         condition=StreamIdInListCondition(
             condition_name="stream_id_in_list",
-            stream_ids=("feed/test.com/1",),
+            stream_ids=frozenset({"feed/test.com/1"}),
         ),
         action=LogAction(action_name="log", level="debug"),
     )
@@ -213,7 +213,7 @@ def test_load_config_from_directory_with_yaml_and_yml(tmp_path: Path) -> None:
         source=SavedSource(),
         condition=StreamIdInListCondition(
             condition_name="stream_id_in_list",
-            stream_ids=("feed/test.com/yml",),
+            stream_ids=frozenset({"feed/test.com/yml"}),
         ),
         action=LogAction(action_name="log", level="debug"),
     )
@@ -252,7 +252,7 @@ def test_load_config_with_mixed_paths(tmp_path: Path) -> None:
         source=SavedSource(),
         condition=StreamIdInListCondition(
             condition_name="stream_id_in_list",
-            stream_ids=("feed/standalone.com/yml",),
+            stream_ids=frozenset({"feed/standalone.com/yml"}),
         ),
         action=LogAction(action_name="log", level="debug"),
     )

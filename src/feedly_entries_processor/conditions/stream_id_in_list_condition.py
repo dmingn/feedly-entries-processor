@@ -7,11 +7,11 @@ from feedly_entries_processor.feedly_client import Entry
 
 
 class StreamIdInListCondition(BaseCondition):
-    """Condition that matches when stream_id is in a given list."""
+    """Condition that matches when stream_id is in a given set."""
 
     condition_name: Literal["stream_id_in_list"]
-    stream_ids: tuple[str, ...]
+    stream_ids: frozenset[str]
 
     def matches(self, entry: Entry) -> bool:
-        """Return True if the entry's stream_id is in the provided list."""
+        """Return True if the entry's stream_id is in the provided set."""
         return entry.origin is not None and entry.origin.stream_id in self.stream_ids
