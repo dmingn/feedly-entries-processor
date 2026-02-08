@@ -38,13 +38,13 @@ Rules are made of **conditions** (when to match) and **actions** (what to do). U
 
 - **Class name**: Describe what is being matched (e.g. `MatchAllCondition`, `StreamIdInListCondition`). Verb-first is optional but can improve clarity.
 - **File name**: Must match the class name in snake_case only (e.g. class `MatchAllCondition` → file `match_all_condition.py`, class `StreamIdInListCondition` → file `stream_id_in_list_condition.py`).
-- **Config key `condition_name`**: Must match the class name with the `Condition` suffix removed, in snake_case (e.g. class `MatchAllCondition` → `condition_name: "match_all"`, class `StreamIdInListCondition` → `condition_name: "stream_id_in_list"`). Changing it is a breaking change.
+- **Config key `name`**: Must match the class name with the `Condition` suffix removed, in snake_case (e.g. class `MatchAllCondition` → `name: "match_all"`, class `StreamIdInListCondition` → `name: "stream_id_in_list"`). Changing it is a breaking change.
 
 ### Actions
 
 - **Class name**: **Verb-first** so the name reads as “what this action does” (e.g. `LogAction`, `AddTodoistTaskAction`).
 - **File name**: Must match the class name in snake_case only (e.g. class `LogAction` → file `log_action.py`, class `AddTodoistTaskAction` → file `add_todoist_task_action.py`).
-- **Config key `action_name`**: Must match the class name with the `Action` suffix removed, in snake_case (e.g. class `LogAction` → `action_name: "log"`, class `AddTodoistTaskAction` → `action_name: "add_todoist_task"`). Changing it is a breaking change.
+- **Config key `name`**: Must match the class name with the `Action` suffix removed, in snake_case (e.g. class `LogAction` → `name: "log"`, class `AddTodoistTaskAction` → `name: "add_todoist_task"`). Changing it is a breaking change.
 
 ### General
 

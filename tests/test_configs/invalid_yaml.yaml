@@ -1,9 +1,9 @@
 rules:
   - name: "Invalid YAML: missing colon"
     source:
-      source_name: "saved"
+      name: "saved"
     condition # Missing colon
-      condition_name: "match_all"
+      name: "match_all"
     action:
-      action_name: "log"
+      name: "log"
       level: "debug"

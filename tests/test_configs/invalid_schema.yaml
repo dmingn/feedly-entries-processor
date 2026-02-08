@@ -1,8 +1,8 @@
 rules:
   - name: "Test Rule 1"
     source:
-      source_name: "saved"
+      name: "saved"
     # Missing 'condition' key
     action:
-      action_name: "log"
+      name: "log"
       level: "info"

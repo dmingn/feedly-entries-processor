@@ -15,7 +15,7 @@ from feedly_entries_processor.feedly_client import Entry
 class AddTodoistTaskAction(BaseAction):
     """An action that adds Feedly entries as tasks in Todoist."""
 
-    action_name: Literal["add_todoist_task"] = "add_todoist_task"
+    name: Literal["add_todoist_task"] = "add_todoist_task"
     project_id: str
     due_datetime: datetime.datetime | None = None
     priority: Literal[1, 2, 3, 4] | None = None

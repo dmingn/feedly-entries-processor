@@ -25,9 +25,9 @@ class Rule(BaseModel):
     """Defines a single processing rule for Feedly entries."""
 
     name: str
-    source: StreamSource = Field(discriminator="source_name")
-    condition: Condition = Field(discriminator="condition_name")
-    action: Action = Field(discriminator="action_name")
+    source: StreamSource = Field(discriminator="name")
+    condition: Condition = Field(discriminator="name")
+    action: Action = Field(discriminator="name")
     model_config = ConfigDict(frozen=True)
 
 

@@ -10,7 +10,7 @@ from feedly_entries_processor.sources.base_source import BaseStreamSource
 class AllSource(BaseStreamSource):
     """Stream source for the All feed (global.all)."""
 
-    source_name: Literal["all"] = "all"
+    name: Literal["all"] = "all"
 
     def fetch_entries(self, client: FeedlyClient) -> Generator[Entry]:
         """Fetch entries from the All feed in Feedly."""

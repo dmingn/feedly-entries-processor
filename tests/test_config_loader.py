@@ -68,16 +68,16 @@ def test_load_config_file_success(valid_config_file: Path) -> None:
                     name="Log Rule for Stream ID",
                     source=SavedSource(),
                     condition=StreamIdInListCondition(
-                        condition_name="stream_id_in_list",
+                        name="stream_id_in_list",
                         stream_ids=frozenset({"feed/test.com/3"}),
                     ),
-                    action=LogAction(action_name="log", level="info"),
+                    action=LogAction(name="log", level="info"),
                 ),
                 Rule(
                     name="Log Rule for All",
                     source=SavedSource(),
-                    condition=MatchAllCondition(condition_name="match_all"),
-                    action=LogAction(action_name="log", level="debug"),
+                    condition=MatchAllCondition(name="match_all"),
+                    action=LogAction(name="log", level="debug"),
                 ),
             )
         )
@@ -86,7 +86,7 @@ def test_load_config_file_success(valid_config_file: Path) -> None:
 
 
 def test_load_config_file_with_all_source(test_configs_path: Path) -> None:
-    """Test that a configuration file with source_name 'all' loads and yields AllSource."""
+    """Test that a configuration file with name 'all' for source loads and yields AllSource."""
     config_file = test_configs_path / "config_with_all_source.yaml"
     config = load_config_file(config_file)
 
@@ -128,10 +128,10 @@ def test_save_config_and_load_back(tmp_path: Path) -> None:
                 name="Saved Rule",
                 source=SavedSource(),
                 condition=StreamIdInListCondition(
-                    condition_name="stream_id_in_list",
+                    name="stream_id_in_list",
                     stream_ids=frozenset({"feed/saved.com/1"}),
                 ),
-                action=LogAction(action_name="log", level="info"),
+                action=LogAction(name="log", level="info"),
             ),
         )
     )
@@ -149,23 +149,23 @@ def test_config_or_operator() -> None:
     rule1 = Rule(
         name="Rule 1",
         source=SavedSource(),
-        condition=MatchAllCondition(condition_name="match_all"),
-        action=LogAction(action_name="log", level="info"),
+        condition=MatchAllCondition(name="match_all"),
+        action=LogAction(name="log", level="info"),
     )
     rule2 = Rule(
         name="Rule 2",
         source=SavedSource(),
         condition=StreamIdInListCondition(
-            condition_name="stream_id_in_list",
+            name="stream_id_in_list",
             stream_ids=frozenset({"feed/test.com/1"}),
         ),
-        action=LogAction(action_name="log", level="debug"),
+        action=LogAction(name="log", level="debug"),
     )
     common_rule = Rule(
         name="Common Rule",
         source=SavedSource(),
-        condition=MatchAllCondition(condition_name="match_all"),
-        action=LogAction(action_name="log", level="warning"),
+        condition=MatchAllCondition(name="match_all"),
+        action=LogAction(name="log", level="warning"),
     )
 
     config1 = Config(rules=frozenset([rule1]))
@@ -201,8 +201,8 @@ def test_load_config_from_directory_with_yaml_and_yml(tmp_path: Path) -> None:
     yaml_rule = Rule(
         name="Yaml Rule",
         source=SavedSource(),
-        condition=MatchAllCondition(condition_name="match_all"),
-        action=LogAction(action_name="log", level="info"),
+        condition=MatchAllCondition(name="match_all"),
+        action=LogAction(name="log", level="info"),
     )
     _save_config(Config(rules=frozenset([yaml_rule])), yaml_config_path)
 
@@ -212,10 +212,10 @@ def test_load_config_from_directory_with_yaml_and_yml(tmp_path: Path) -> None:
         name="Yml Rule",
         source=SavedSource(),
         condition=StreamIdInListCondition(
-            condition_name="stream_id_in_list",
+            name="stream_id_in_list",
             stream_ids=frozenset({"feed/test.com/yml"}),
         ),
-        action=LogAction(action_name="log", level="debug"),
+        action=LogAction(name="log", level="debug"),
     )
     _save_config(Config(rules=frozenset([yml_rule])), yml_config_path)
 
@@ -240,8 +240,8 @@ def test_load_config_with_mixed_paths(tmp_path: Path) -> None:
     dir_yaml_rule = Rule(
         name="Dir Yaml Rule",
         source=SavedSource(),
-        condition=MatchAllCondition(condition_name="match_all"),
-        action=LogAction(action_name="log", level="info"),
+        condition=MatchAllCondition(name="match_all"),
+        action=LogAction(name="log", level="info"),
     )
     _save_config(Config(rules=frozenset([dir_yaml_rule])), dir_yaml_path)
 
@@ -251,10 +251,10 @@ def test_load_config_with_mixed_paths(tmp_path: Path) -> None:
         name="Standalone Yml Rule",
         source=SavedSource(),
         condition=StreamIdInListCondition(
-            condition_name="stream_id_in_list",
+            name="stream_id_in_list",
             stream_ids=frozenset({"feed/standalone.com/yml"}),
         ),
-        action=LogAction(action_name="log", level="debug"),
+        action=LogAction(name="log", level="debug"),
     )
     _save_config(Config(rules=frozenset([standalone_yml_rule])), standalone_yml_path)
 

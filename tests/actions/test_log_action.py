@@ -31,7 +31,7 @@ def test_log_action_instantiation() -> None:
     """Test that LogAction can be instantiated correctly."""
     action = LogAction(level="info")
     assert isinstance(action, LogAction)
-    assert action.action_name == "log"
+    assert action.name == "log"
     assert action.level == "info"
 
 

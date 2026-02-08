@@ -11,7 +11,7 @@ from feedly_entries_processor.feedly_client import Entry
 class LogAction(BaseAction):
     """An action that logs the Feedly entry."""
 
-    action_name: Literal["log"] = "log"
+    name: Literal["log"] = "log"
     level: Literal["info", "debug", "warning", "error"] = "info"
 
     def process(self, entry: Entry) -> None:

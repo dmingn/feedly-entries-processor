@@ -29,7 +29,7 @@ def mock_entry() -> Entry:
 def mock_condition(mocker: MockerFixture) -> MatchAllCondition:
     """Fixture for a mock MatchAllCondition."""
     mock = mocker.create_autospec(MatchAllCondition)
-    mock.condition_name = "match_all"
+    mock.name = "match_all"
     return mock
 
 
@@ -37,7 +37,7 @@ def mock_condition(mocker: MockerFixture) -> MatchAllCondition:
 def mock_action(mocker: MockerFixture) -> LogAction:
     """Fixture for a mock LogAction."""
     mock = mocker.create_autospec(LogAction)
-    mock.action_name = "log"
+    mock.name = "log"
     return mock
 
 

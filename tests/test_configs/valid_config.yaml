@@ -1,20 +1,20 @@
 rules:
   - name: "Log Rule for Stream ID"
     source:
-      source_name: "saved"
+      name: "saved"
     condition:
-      condition_name: "stream_id_in_list"
+      name: "stream_id_in_list"
       stream_ids:
         - "feed/test.com/3"
     action:
-      action_name: "log"
+      name: "log"
       level: "info"
 
   - name: "Log Rule for All"
     source:
-      source_name: "saved"
+      name: "saved"
     condition:
-      condition_name: "match_all"
+      name: "match_all"
     action:
-      action_name: "log"
+      name: "log"
       level: "debug"

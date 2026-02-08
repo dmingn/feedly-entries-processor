@@ -10,7 +10,7 @@ from feedly_entries_processor.sources.base_source import BaseStreamSource
 class SavedSource(BaseStreamSource):
     """Stream source for saved entries."""
 
-    source_name: Literal["saved"] = "saved"
+    name: Literal["saved"] = "saved"
 
     def fetch_entries(self, client: FeedlyClient) -> Generator[Entry]:
         """Fetch saved entries from Feedly."""
