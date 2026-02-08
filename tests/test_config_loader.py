@@ -1,5 +1,6 @@
 """Tests for the config_loader module."""
 
+import datetime
 from pathlib import Path
 
 import pytest
@@ -7,7 +8,7 @@ from pydantic import ValidationError
 from pydantic_yaml import to_yaml_str
 from ruamel.yaml.error import YAMLError
 
-from feedly_entries_processor.actions import LogAction
+from feedly_entries_processor.actions import AddTodoistTaskAction, LogAction
 from feedly_entries_processor.conditions import (
     MatchAllCondition,
     StreamIdInListCondition,
@@ -22,6 +23,26 @@ from feedly_entries_processor.exceptions import ConfigError
 from feedly_entries_processor.sources import AllSource, SavedSource
 
 TEST_CONFIGS_PATH = Path(__file__).parent / "test_configs"
+
+# Defaults when not varying that dimension (used for round-trip coverage).
+_DEFAULT_SOURCE = AllSource()
+_DEFAULT_CONDITION = MatchAllCondition()
+_DEFAULT_ACTION = LogAction()
+
+
+_SOURCES = (AllSource(), SavedSource())
+_CONDITIONS = (
+    MatchAllCondition(),
+    StreamIdInListCondition(stream_ids=frozenset({"stream_id"})),
+)
+_ACTIONS = (
+    LogAction(),
+    AddTodoistTaskAction(
+        project_id="project_id",
+        due_datetime=datetime.datetime(2026, 1, 1, 0, 0, 0, tzinfo=datetime.UTC),
+        priority=1,
+    ),
+)
 
 
 def _save_config(config: Config, file_path: Path) -> None:
@@ -38,12 +59,6 @@ def _save_config(config: Config, file_path: Path) -> None:
 def test_configs_path() -> Path:
     """Provide the base path to the test configuration files directory."""
     return TEST_CONFIGS_PATH
-
-
-@pytest.fixture
-def valid_config_file(test_configs_path: Path) -> Path:
-    """Provide a path to a valid configuration file."""
-    return test_configs_path / "valid_config.yaml"
 
 
 @pytest.mark.parametrize(
@@ -79,68 +94,27 @@ def test_load_config_file_failure(
         assert message_contains in str(exc_info.value.__cause__)
 
 
-def test_load_config_file_success(valid_config_file: Path) -> None:
-    """Test that a valid configuration file can be loaded successfully."""
-    config = load_config_file(valid_config_file)
-
-    assert isinstance(config, Config)
-    expected_config = Config(
-        rules=frozenset(
-            (
-                Rule(
-                    name="Log Rule for Stream ID",
-                    source=SavedSource(),
-                    condition=StreamIdInListCondition(
-                        name="stream_id_in_list",
-                        stream_ids=frozenset({"feed/test.com/3"}),
-                    ),
-                    action=LogAction(name="log", level="info"),
-                ),
-                Rule(
-                    name="Log Rule for All",
-                    source=SavedSource(),
-                    condition=MatchAllCondition(name="match_all"),
-                    action=LogAction(name="log", level="debug"),
-                ),
-            )
+@pytest.mark.parametrize(
+    "config",
+    [
+        pytest.param(
+            Config(rules=frozenset([Rule(name=name, source=s, condition=c, action=a)])),
+            id=name,
         )
-    )
-    assert config == expected_config
-
-
-def test_load_config_file_with_all_source(test_configs_path: Path) -> None:
-    """Test that a configuration file with name 'all' for source loads and yields AllSource."""
-    config_file = test_configs_path / "config_with_all_source.yaml"
-    config = load_config_file(config_file)
-
-    assert len(config.rules) == 1
-    rule = next(iter(config.rules))
-    assert rule.source == AllSource()
-    assert rule.name == "Log Rule from All feed"
-
-
-def test_save_config_and_load_back(tmp_path: Path) -> None:
-    """Test that a Config object can be saved and loaded back correctly."""
-    original_config = Config(
-        rules=(
-            Rule(
-                name="Saved Rule",
-                source=SavedSource(),
-                condition=StreamIdInListCondition(
-                    name="stream_id_in_list",
-                    stream_ids=frozenset({"feed/saved.com/1"}),
-                ),
-                action=LogAction(name="log", level="info"),
-            ),
+        for (s, c, a) in frozenset(
+            [(s, _DEFAULT_CONDITION, _DEFAULT_ACTION) for s in _SOURCES]
+            + [(_DEFAULT_SOURCE, c, _DEFAULT_ACTION) for c in _CONDITIONS]
+            + [(_DEFAULT_SOURCE, _DEFAULT_CONDITION, a) for a in _ACTIONS]
         )
-    )
-    output_file = tmp_path / "saved_config.yaml"
-
-    _save_config(original_config, output_file)
-
-    loaded_config = load_config_file(output_file)
-
-    assert loaded_config == original_config
+        for name in [f"{type(s).__name__}_{type(c).__name__}_{type(a).__name__}"]
+    ],
+)
+def test_config_round_trip(config: Config, tmp_path: Path) -> None:
+    """Test that each Config round-trips: write to YAML, load back, assert equal."""
+    path = tmp_path / "config.yaml"
+    path.write_text(to_yaml_str(config), encoding="utf-8")
+    loaded = load_config_file(path)
+    assert loaded == config
 
 
 def test_config_or_operator() -> None:
