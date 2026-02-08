@@ -10,7 +10,7 @@ rules:
       action_name: "log"
       level: "info"
 
-  - name: "Log Rule for All Matcher"
+  - name: "Log Rule for All"
     source:
       source_name: "saved"
     condition:

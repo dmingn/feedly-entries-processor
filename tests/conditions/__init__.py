@@ -1,1 +1,1 @@
-"""Tests for the matchers module."""
+"""Tests for the conditions module."""

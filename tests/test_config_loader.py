@@ -74,7 +74,7 @@ def test_load_config_file_success(valid_config_file: Path) -> None:
                     action=LogAction(action_name="log", level="info"),
                 ),
                 Rule(
-                    name="Log Rule for All Matcher",
+                    name="Log Rule for All",
                     source=SavedSource(),
                     condition=MatchAllCondition(condition_name="match_all"),
                     action=LogAction(action_name="log", level="debug"),

@@ -1,1 +1,1 @@
-"""Tests for entry processors."""
+"""Tests for the actions module."""
