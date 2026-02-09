@@ -68,7 +68,7 @@ jobs:
       - name: Generate config schema
         if: steps.should_release.outputs.release == 'true'
         run: |
-          uv run feedly-entries-processor show-config-schema > config_schema.json
+          uv run feedly-entries-processor --show-config-schema > config_schema.json
 
       - name: Create GitHub Release
         if: steps.should_release.outputs.release == 'true'
