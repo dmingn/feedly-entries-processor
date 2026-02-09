@@ -95,6 +95,24 @@ def test_load_config_file_failure(
 
 
 @pytest.mark.parametrize(
+    ("path_suffix", "message_contains"),
+    [
+        ("non_existent.yaml", "Path does not point to a file"),
+        ("non_existent_dir", "Path does not point to a directory"),
+    ],
+)
+def test_load_config_path_failure(
+    tmp_path: Path, path_suffix: str, message_contains: str
+) -> None:
+    """Test that load_config raises ConfigError for non-existent file or directory."""
+    path = tmp_path / path_suffix
+    with pytest.raises(ConfigError) as exc_info:
+        load_config([path])
+    assert isinstance(exc_info.value.__cause__, ValidationError)
+    assert message_contains in str(exc_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
     "config",
     [
         pytest.param(
@@ -236,15 +254,3 @@ def test_load_config_with_mixed_paths(tmp_path: Path) -> None:
 
     # Assert that all rules are loaded
     assert loaded_config.rules == frozenset([dir_yaml_rule, standalone_yml_rule])
-
-    # Test with a non-existent file path, should raise ConfigError
-    with pytest.raises(ConfigError) as exc_info_file:
-        load_config([tmp_path / "non_existent.yaml"])
-    assert isinstance(exc_info_file.value.__cause__, ValidationError)
-    assert "Path does not point to a file" in str(exc_info_file.value.__cause__)
-
-    # Test with a non-existent directory path, should raise ConfigError
-    with pytest.raises(ConfigError) as exc_info_dir:
-        load_config([tmp_path / "non_existent_dir"])
-    assert isinstance(exc_info_dir.value.__cause__, ValidationError)
-    assert "Path does not point to a directory" in str(exc_info_dir.value.__cause__)
