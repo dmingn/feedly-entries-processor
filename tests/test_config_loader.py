@@ -1,5 +1,6 @@
 """Tests for the config_loader module."""
 
+import datetime
 from pathlib import Path
 
 import pytest
@@ -7,7 +8,7 @@ from pydantic import ValidationError
 from pydantic_yaml import to_yaml_str
 from ruamel.yaml.error import YAMLError
 
-from feedly_entries_processor.actions import LogAction
+from feedly_entries_processor.actions import AddTodoistTaskAction, LogAction
 from feedly_entries_processor.conditions import (
     MatchAllCondition,
     StreamIdInListCondition,
@@ -20,6 +21,28 @@ from feedly_entries_processor.config_loader import (
 )
 from feedly_entries_processor.exceptions import ConfigError
 from feedly_entries_processor.sources import AllSource, SavedSource
+
+TEST_CONFIGS_PATH = Path(__file__).parent / "test_configs"
+
+# Defaults when not varying that dimension (used for round-trip coverage).
+_DEFAULT_SOURCE = AllSource()
+_DEFAULT_CONDITION = MatchAllCondition()
+_DEFAULT_ACTION = LogAction()
+
+
+_SOURCES = (AllSource(), SavedSource())
+_CONDITIONS = (
+    MatchAllCondition(),
+    StreamIdInListCondition(stream_ids=frozenset({"stream_id"})),
+)
+_ACTIONS = (
+    LogAction(),
+    AddTodoistTaskAction(
+        project_id="project_id",
+        due_datetime=datetime.datetime(2026, 1, 1, 0, 0, 0, tzinfo=datetime.UTC),
+        priority=1,
+    ),
+)
 
 
 def _save_config(config: Config, file_path: Path) -> None:
@@ -35,113 +58,81 @@ def _save_config(config: Config, file_path: Path) -> None:
 @pytest.fixture
 def test_configs_path() -> Path:
     """Provide the base path to the test configuration files directory."""
-    return Path(__file__).parent / "test_configs"
+    return TEST_CONFIGS_PATH
 
 
-@pytest.fixture
-def valid_config_file(test_configs_path: Path) -> Path:
-    """Provide a path to a valid configuration file."""
-    return test_configs_path / "valid_config.yaml"
-
-
-@pytest.fixture
-def invalid_yaml_file(test_configs_path: Path) -> Path:
-    """Provide a path to an invalid YAML file."""
-    return test_configs_path / "invalid_yaml.yaml"
-
-
-@pytest.fixture
-def invalid_schema_file(test_configs_path: Path) -> Path:
-    """Provide a path to a YAML file with invalid schema."""
-    return test_configs_path / "invalid_schema.yaml"
-
-
-def test_load_config_file_success(valid_config_file: Path) -> None:
-    """Test that a valid configuration file can be loaded successfully."""
-    config = load_config_file(valid_config_file)
-
-    assert isinstance(config, Config)
-    expected_config = Config(
-        rules=frozenset(
-            (
-                Rule(
-                    name="Log Rule for Stream ID",
-                    source=SavedSource(),
-                    condition=StreamIdInListCondition(
-                        name="stream_id_in_list",
-                        stream_ids=frozenset({"feed/test.com/3"}),
-                    ),
-                    action=LogAction(name="log", level="info"),
-                ),
-                Rule(
-                    name="Log Rule for All",
-                    source=SavedSource(),
-                    condition=MatchAllCondition(name="match_all"),
-                    action=LogAction(name="log", level="debug"),
-                ),
-            )
-        )
-    )
-    assert config == expected_config
-
-
-def test_load_config_file_with_all_source(test_configs_path: Path) -> None:
-    """Test that a configuration file with name 'all' for source loads and yields AllSource."""
-    config_file = test_configs_path / "config_with_all_source.yaml"
-    config = load_config_file(config_file)
-
-    assert len(config.rules) == 1
-    rule = next(iter(config.rules))
-    assert rule.source == AllSource()
-    assert rule.name == "Log Rule from All feed"
-
-
-def test_load_config_file_file_not_found(tmp_path: Path) -> None:
-    """Test that ConfigError is raised for a non-existent file."""
-    non_existent_file = tmp_path / "non_existent.yaml"
+@pytest.mark.parametrize(
+    ("path", "cause_type", "message_contains"),
+    [
+        pytest.param(
+            TEST_CONFIGS_PATH / "invalid_yaml.yaml", YAMLError, None, id="invalid_yaml"
+        ),
+        pytest.param(
+            TEST_CONFIGS_PATH / "invalid_schema.yaml",
+            ValidationError,
+            "Field required",
+            id="invalid_schema",
+        ),
+        pytest.param(
+            TEST_CONFIGS_PATH / "non_existent.yaml",
+            ValidationError,
+            "Path does not point to a file",
+            id="file_not_found",
+        ),
+    ],
+)
+def test_load_config_file_failure(
+    path: Path,
+    cause_type: type[Exception],
+    message_contains: str | None,
+) -> None:
+    """Test that ConfigError is raised for invalid YAML, invalid schema, or missing file."""
     with pytest.raises(ConfigError) as exc_info:
-        load_config_file(non_existent_file)
+        load_config_file(path)
+    assert isinstance(exc_info.value.__cause__, cause_type)
+    if message_contains is not None:
+        assert message_contains in str(exc_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
+    ("path_suffix", "message_contains"),
+    [
+        ("non_existent.yaml", "Path does not point to a file"),
+        ("non_existent_dir", "Path does not point to a directory"),
+    ],
+)
+def test_load_config_path_failure(
+    tmp_path: Path, path_suffix: str, message_contains: str
+) -> None:
+    """Test that load_config raises ConfigError for non-existent file or directory."""
+    path = tmp_path / path_suffix
+    with pytest.raises(ConfigError) as exc_info:
+        load_config([path])
     assert isinstance(exc_info.value.__cause__, ValidationError)
-    assert "Path does not point to a file" in str(exc_info.value.__cause__)
+    assert message_contains in str(exc_info.value.__cause__)
 
 
-def test_load_config_file_invalid_yaml(invalid_yaml_file: Path) -> None:
-    """Test that ConfigError is raised for an invalid YAML file."""
-    with pytest.raises(ConfigError) as exc_info:
-        load_config_file(invalid_yaml_file)
-    assert isinstance(exc_info.value.__cause__, YAMLError)
-
-
-def test_load_config_file_invalid_schema(invalid_schema_file: Path) -> None:
-    """Test that ConfigError is raised for a YAML file with invalid schema."""
-    with pytest.raises(ConfigError) as exc_info:
-        load_config_file(invalid_schema_file)
-    assert isinstance(exc_info.value.__cause__, ValidationError)
-    assert "Field required" in str(exc_info.value.__cause__)
-
-
-def test_save_config_and_load_back(tmp_path: Path) -> None:
-    """Test that a Config object can be saved and loaded back correctly."""
-    original_config = Config(
-        rules=(
-            Rule(
-                name="Saved Rule",
-                source=SavedSource(),
-                condition=StreamIdInListCondition(
-                    name="stream_id_in_list",
-                    stream_ids=frozenset({"feed/saved.com/1"}),
-                ),
-                action=LogAction(name="log", level="info"),
-            ),
+@pytest.mark.parametrize(
+    "config",
+    [
+        pytest.param(
+            Config(rules=frozenset([Rule(name=name, source=s, condition=c, action=a)])),
+            id=name,
         )
-    )
-    output_file = tmp_path / "saved_config.yaml"
-
-    _save_config(original_config, output_file)
-
-    loaded_config = load_config_file(output_file)
-
-    assert loaded_config == original_config
+        for (s, c, a) in frozenset(
+            [(s, _DEFAULT_CONDITION, _DEFAULT_ACTION) for s in _SOURCES]
+            + [(_DEFAULT_SOURCE, c, _DEFAULT_ACTION) for c in _CONDITIONS]
+            + [(_DEFAULT_SOURCE, _DEFAULT_CONDITION, a) for a in _ACTIONS]
+        )
+        for name in [f"{type(s).__name__}_{type(c).__name__}_{type(a).__name__}"]
+    ],
+)
+def test_config_round_trip(config: Config, tmp_path: Path) -> None:
+    """Test that each Config round-trips: write to YAML, load back, assert equal."""
+    path = tmp_path / "config.yaml"
+    path.write_text(to_yaml_str(config), encoding="utf-8")
+    loaded = load_config_file(path)
+    assert loaded == config
 
 
 def test_config_or_operator() -> None:
@@ -263,15 +254,3 @@ def test_load_config_with_mixed_paths(tmp_path: Path) -> None:
 
     # Assert that all rules are loaded
     assert loaded_config.rules == frozenset([dir_yaml_rule, standalone_yml_rule])
-
-    # Test with a non-existent file path, should raise ConfigError
-    with pytest.raises(ConfigError) as exc_info_file:
-        load_config([tmp_path / "non_existent.yaml"])
-    assert isinstance(exc_info_file.value.__cause__, ValidationError)
-    assert "Path does not point to a file" in str(exc_info_file.value.__cause__)
-
-    # Test with a non-existent directory path, should raise ConfigError
-    with pytest.raises(ConfigError) as exc_info_dir:
-        load_config([tmp_path / "non_existent_dir"])
-    assert isinstance(exc_info_dir.value.__cause__, ValidationError)
-    assert "Path does not point to a directory" in str(exc_info_dir.value.__cause__)
