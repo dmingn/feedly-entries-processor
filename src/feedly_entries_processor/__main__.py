@@ -8,8 +8,8 @@ import logzero
 import typer
 from logzero import logger
 
-from feedly_entries_processor.config_loader import Config
-from feedly_entries_processor.exceptions import FeedlyEntriesProcessorError
+from feedly_entries_processor.config_loader import Config, load_config
+from feedly_entries_processor.exceptions import ConfigError, FeedlyEntriesProcessorError
 from feedly_entries_processor.process import process
 
 app = typer.Typer()
@@ -44,6 +44,13 @@ def main(
         bool,
         typer.Option(help="Output logs in JSON format."),
     ] = False,
+    validate_config: Annotated[
+        bool,
+        typer.Option(
+            "--validate-config",
+            help="Validate configuration files and exit.",
+        ),
+    ] = False,
     show_config_schema_flag: Annotated[  # noqa: ARG001
         bool,
         typer.Option(
@@ -57,6 +64,16 @@ def main(
     """A CLI application to process Feedly entries."""  # noqa: D401
     if json_log:
         logzero.json()
+
+    if validate_config:
+        try:
+            load_config(config_files)
+        except ConfigError:
+            logger.exception("Configuration validation failed.")
+            raise typer.Exit(code=1) from None
+
+        typer.echo("Configuration is valid.")
+        raise typer.Exit
 
     if token_dir is None:
         token_dir = Path.home() / ".config" / "feedly"
