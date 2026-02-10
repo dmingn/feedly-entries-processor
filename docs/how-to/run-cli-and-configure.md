@@ -38,6 +38,14 @@ To emit JSON-formatted logs, use `--json-log`:
 feedly-entries-processor --json-log config.yaml
 ```
 
+### Validate configuration
+
+To validate configuration files without contacting Feedly, use `--validate-config`:
+
+```bash
+feedly-entries-processor --validate-config config.yaml
+```
+
 ### Show configuration schema
 
 To view the full JSON schema for the configuration, run:
