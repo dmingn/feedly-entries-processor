@@ -20,4 +20,4 @@ When adding or renaming an action:
 - **File name**: Must match the class name in snake_case only (for example class `LogAction` → file `log_action.py`, class `AddTodoistTaskAction` → file `add_todoist_task_action.py`).
 - **Config key `name`**: Must match the class name with the `Action` suffix removed, in snake_case (for example class `LogAction` → `name: "log"`, class `AddTodoistTaskAction` → `name: "add_todoist_task"`). Changing it is a breaking change.
 
-When adding or updating tests for new rule components, follow the project-wide testing conventions described in `docs/how-to/develop-and-test.md`.
+When adding or updating tests for new rule components, follow the project-wide testing conventions described in [`develop-and-test.md`](./develop-and-test.md).

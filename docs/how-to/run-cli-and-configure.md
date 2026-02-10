@@ -2,7 +2,7 @@
 
 This guide shows different ways to run `feedly-entries-processor` and how to structure your YAML configuration.
 
-For details of the YAML schema itself, see the configuration reference in `docs/reference/configuration.md`.
+For details of the YAML schema itself, see the configuration reference in [`configuration.md`](../reference/configuration.md).
 
 ## Running the CLI
 
@@ -55,4 +55,4 @@ A configuration file contains a top-level `rules` list. Each rule has:
 - `condition`: how to decide whether an entry matches
 - `action`: what to do when an entry matches
 
-See `docs/reference/configuration.md` for full details of available conditions and actions.
+See [`configuration.md`](../reference/configuration.md) for full details of available conditions and actions.

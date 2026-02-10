@@ -10,7 +10,7 @@ You will:
 - create a minimal rule file
 - run the processor against that configuration
 
-For more background, see the main `README.md`.
+For more background, see the main [`README.md`](../../README.md).
 
 ### 1. Requirements
 
@@ -54,7 +54,7 @@ rules:
 
 This rule logs saved entries from the specified feed at `info` level.
 
-For more configuration options (such as Todoist integration), see `docs/reference/configuration.md`.
+For more configuration options (such as Todoist integration), see [`configuration.md`](../reference/configuration.md).
 
 ### 5. Run the processor
 
