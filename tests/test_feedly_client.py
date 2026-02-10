@@ -256,8 +256,8 @@ def test_create_feedly_client_raises_error_on_dir_permission_error(
     try:
         with pytest.raises(FeedlyClientInitError) as excinfo:
             create_feedly_client(token_dir=token_dir)
-
-        assert isinstance(excinfo.value.__cause__, PermissionError)
     finally:
         # Restore permissions so pytest can clean up tmp_path.
         token_dir.chmod(0o700)
+
+    assert isinstance(excinfo.value.__cause__, PermissionError)
