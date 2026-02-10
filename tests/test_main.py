@@ -110,5 +110,5 @@ def test_main_exits_with_error_for_invalid_config_when_validating(
     )
 
     # assert
-    assert result.exit_code != 0
+    assert result.exit_code == 1
     mock_process.assert_not_called()
