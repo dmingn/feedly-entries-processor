@@ -76,4 +76,4 @@ jobs:
           gh release create ${{ steps.should_release.outputs.new_tag }} \
             --generate-notes \
             --title "${{ steps.should_release.outputs.new_tag }}" \
-            --asset config_schema.json
+            config_schema.json
