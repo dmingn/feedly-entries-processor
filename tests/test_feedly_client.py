@@ -284,7 +284,11 @@ def test_create_feedly_client_raises_FeedlyClientInitError_when_dir_unreadable(
     token_dir.chmod(non_executable_mode)
 
     # act & assert
-    with pytest.raises(FeedlyClientInitError) as excinfo:
-        create_feedly_client(token_dir=token_dir)
+    try:
+        with pytest.raises(FeedlyClientInitError) as excinfo:
+            create_feedly_client(token_dir=token_dir)
+    finally:
+        # Restore permissions so pytest can clean up tmp_path.
+        token_dir.chmod(0o700)
 
     assert isinstance(excinfo.value.__cause__, PermissionError)
