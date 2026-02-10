@@ -18,6 +18,34 @@ This project assumes a Python development environment.
 
 To ensure code quality and adherence to standards, the agent SHOULD execute `make format-and-check` before submitting changes. This command runs formatting, linting, type checking, and unit tests.
 
+## Testing Conventions
+
+Follow these conventions when writing or refactoring tests.
+
+### Test names (natural English sentence)
+
+- **Principle**: Test names must read as a natural English sentence.
+- **SUT**: It is OK for test names to include the class or function name as written in code (PascalCase for classes like `FeedlyClient`, snake_case for functions like `process_entry`).
+
+### Test documentation (docstrings)
+
+- **Docstrings**: The test name should be the primary description. Avoid docstrings unless they add information beyond the name.
+
+### Test body structure (Arrange / Act / Assert)
+
+- **Comments**: Inside each test, mark **Arrange** (setup), **Act** (invocation), and **Assert** (verification) with `# arrange`, `# act`, and `# assert` comments.
+- **Scope**: For a single-line act or a short run of asserts, one comment for the block is enough; avoid a comment on every line.
+
+### Parametrization (parametrize)
+
+- **When to use**: When multiple cases differ only by condition or expected value for the same SUT, prefer a single test function with `@pytest.mark.parametrize`.
+- **Param and id**: Use `pytest.param(..., id="...")` so each case declares its parameters and id together. Use short, descriptive ids (e.g. `invalid_yaml`, `request_exception`, `level_info`).
+
+### Mocking (prefer pytest-mock)
+
+- **Prefer pytest-mock**: Use the `mocker` fixture (`MockerFixture`) and create mocks with `mocker.patch`, `mocker.create_autospec`, etc.
+- **Test data**: Fixtures that hold real data (e.g. `Entry`, `Origin`) are test data, not mocks; they may be used as-is.
+
 ## Language Policy
 
 - **Development Language**: All code, documentation (including code comments), and commit messages MUST be written in English.

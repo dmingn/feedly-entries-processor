@@ -27,39 +27,46 @@ def mock_entry() -> Entry:
     )
 
 
-def test_log_action_instantiation() -> None:
-    """Test that LogAction can be instantiated correctly."""
+def test_LogAction_can_be_instantiated() -> None:
+    # arrange
     action = LogAction(level="info")
+
+    # assert
     assert isinstance(action, LogAction)
     assert action.name == "log"
     assert action.level == "info"
 
 
-def test_log_action_default_level() -> None:
-    """Test that LogAction defaults to 'info' level."""
+def test_LogAction_defaults_to_info_level() -> None:
+    # arrange & act
     action = LogAction()
+
+    # assert
     assert action.level == "info"
 
 
 @pytest.mark.parametrize(
     ("level", "expected_log_method"),
     [
-        ("info", "info"),
-        ("debug", "debug"),
-        ("warning", "warning"),
-        ("error", "error"),
+        pytest.param("info", "info", id="info"),
+        pytest.param("debug", "debug", id="debug"),
+        pytest.param("warning", "warning", id="warning"),
+        pytest.param("error", "error", id="error"),
     ],
 )
-def test_log_action_process(
+def test_LogAction_process_logs_at_configured_level(
     level: Literal["info", "debug", "warning", "error"],
     expected_log_method: str,
     mock_logger: MagicMock,
     mock_entry: Entry,
 ) -> None:
-    """Test that process logs at the correct level."""
+    # arrange
     action = LogAction(level=level)
+
+    # act
     action.process(mock_entry)
 
+    # assert
     log_message = (
         f"Processing entry: {mock_entry.title} (URL: {mock_entry.canonical_url})"
     )
@@ -76,7 +83,7 @@ def test_log_action_process(
         pytest.fail(f"Unexpected log level: {level}")
 
 
-def test_log_action_validation_error_invalid_level() -> None:
-    """Test that ValidationError is raised for an invalid log level."""
+def test_LogAction_raises_ValidationError_for_invalid_level() -> None:
+    # act & assert
     with pytest.raises(ValidationError):
         LogAction(level="invalid")  # type: ignore[arg-type, unused-ignore]

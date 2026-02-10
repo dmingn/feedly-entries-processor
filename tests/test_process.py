@@ -56,11 +56,13 @@ def test_process_entry_calls_action_when_rule_matches(
     mock_entry: Entry,
     mock_rule: Rule,
 ) -> None:
-    """Test that process_entry calls the action when the rule matches."""
+    # arrange
     cast("MagicMock", mock_rule.condition).matches.return_value = True
 
+    # act
     process_entry(mock_entry, mock_rule)
 
+    # assert
     cast("MagicMock", mock_rule.condition).matches.assert_called_once_with(mock_entry)
     cast("MagicMock", mock_rule.action).process.assert_called_once_with(mock_entry)
 
@@ -69,21 +71,23 @@ def test_process_entry_does_not_call_action_when_rule_does_not_match(
     mock_entry: Entry,
     mock_rule: Rule,
 ) -> None:
-    """Test that process_entry does not call the action when the rule does not match."""
+    # arrange
     cast("MagicMock", mock_rule.condition).matches.return_value = False
 
+    # act
     process_entry(mock_entry, mock_rule)
 
+    # assert
     cast("MagicMock", mock_rule.condition).matches.assert_called_once_with(mock_entry)
     cast("MagicMock", mock_rule.action).process.assert_not_called()
 
 
-def test_process_entry_handles_exception_in_matches(
+def test_process_entry_handles_exception_when_matches_raises(
     mocker: MockerFixture,
     mock_entry: Entry,
     mock_rule: Rule,
 ) -> None:
-    """Test that process_entry handles exceptions raised by matches."""
+    # arrange
     cast("MagicMock", mock_rule.condition).matches.side_effect = Exception(
         "Test exception"
     )
@@ -91,19 +95,21 @@ def test_process_entry_handles_exception_in_matches(
         "feedly_entries_processor.process.logger.exception"
     )
 
+    # act
     process_entry(mock_entry, mock_rule)
 
+    # assert
     cast("MagicMock", mock_rule.condition).matches.assert_called_once_with(mock_entry)
     cast("MagicMock", mock_rule.action).process.assert_not_called()
     mock_logger_exception.assert_called_once()
 
 
-def test_process_entry_handles_exception_in_action(
+def test_process_entry_handles_exception_when_action_raises(
     mocker: MockerFixture,
     mock_entry: Entry,
     mock_rule: Rule,
 ) -> None:
-    """Test that process_entry handles exceptions raised by the action."""
+    # arrange
     cast("MagicMock", mock_rule.condition).matches.return_value = True
     cast("MagicMock", mock_rule.action).process.side_effect = Exception(
         "Test exception"
@@ -112,8 +118,10 @@ def test_process_entry_handles_exception_in_action(
         "feedly_entries_processor.process.logger.exception"
     )
 
+    # act
     process_entry(mock_entry, mock_rule)
 
+    # assert
     cast("MagicMock", mock_rule.condition).matches.assert_called_once_with(mock_entry)
     cast("MagicMock", mock_rule.action).process.assert_called_once_with(mock_entry)
     mock_logger_exception.assert_called_once()
@@ -122,15 +130,17 @@ def test_process_entry_handles_exception_in_action(
 def test_process_entries_calls_process_entry_for_each_entry_and_rule(
     mocker: MockerFixture,
 ) -> None:
-    """Test that process_entries calls process_entry for each entry and rule."""
+    # arrange
     mock_process_entry = mocker.patch("feedly_entries_processor.process.process_entry")
     entry1, entry2 = MagicMock(spec=Entry), MagicMock(spec=Entry)
     rule1, rule2 = MagicMock(spec=Rule), MagicMock(spec=Rule)
     entries = [entry1, entry2]
     rules = [rule1, rule2]
 
+    # act
     process_entries(entries, rules)
 
+    # assert
     expected_calls = [
         mocker.call(entry1, rule1),
         mocker.call(entry1, rule2),
