@@ -72,13 +72,15 @@ def test_AddTodoistTaskAction_initializes_todoist_client_on_first_access(
     mock_todoist_api: MagicMock,
     add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
 ) -> None:
-    """Test that the Todoist API client is initialized and cached on first access."""
     # arrange
     action = add_todoist_task_action_factory()
 
+    # act
+    client = action._todoist_client  # noqa: SLF001
+
     # assert
-    assert action._todoist_client is not None  # noqa: SLF001
-    assert action._todoist_client == mock_todoist_api.return_value  # noqa: SLF001
+    assert client is not None
+    assert client == mock_todoist_api.return_value
 
 
 def test_AddTodoistTaskAction_process_creates_task_for_entry(
@@ -86,7 +88,6 @@ def test_AddTodoistTaskAction_process_creates_task_for_entry(
     add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
     entry_builder: Callable[..., Entry],
 ) -> None:
-    """Test successful processing of an entry."""
     # arrange
     sample_entry = entry_builder()
     action = add_todoist_task_action_factory()
@@ -112,7 +113,6 @@ def test_AddTodoistTaskAction_process_raises_ValueError_for_entry_without_canoni
     add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
     entry_builder: Callable[..., Entry],
 ) -> None:
-    """Test processing of an entry without a canonical URL raises an error."""
     # arrange
     entry = entry_builder(
         canonical_url=None, title="Test Entry No URL", summary_content=None
@@ -132,7 +132,6 @@ def test_AddTodoistTaskAction_process_raises_error_when_add_task_fails(
     add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
     entry_builder: Callable[..., Entry],
 ) -> None:
-    """Test error handling when adding a task fails."""
     # arrange
     sample_entry = entry_builder()
     action = add_todoist_task_action_factory()
@@ -151,7 +150,6 @@ def test_AddTodoistTaskAction_process_uses_optional_params_when_provided(
     entry_builder: Callable[..., Entry],
     add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
 ) -> None:
-    """Test processing of an entry with optional parameters (due_datetime, priority)."""
     # arrange
     due_datetime = datetime.datetime(2025, 12, 31, 23, 59, 59, tzinfo=datetime.UTC)
     priority: Literal[1, 2, 3, 4] = 2  # Use Literal for type hint

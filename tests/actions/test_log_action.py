@@ -13,13 +13,11 @@ from feedly_entries_processor.feedly_client import Entry
 
 @pytest.fixture
 def mock_logger(mocker: MockerFixture) -> MagicMock:
-    """Mock the logzero logger."""
     return mocker.patch("feedly_entries_processor.actions.log_action.logger")
 
 
 @pytest.fixture
 def mock_entry() -> Entry:
-    """Provide a mock Entry object."""
     return Entry(
         id="entry_id",
         title="Test Entry Title",
@@ -28,7 +26,7 @@ def mock_entry() -> Entry:
 
 
 def test_LogAction_can_be_instantiated() -> None:
-    # arrange
+    # arrange & act
     action = LogAction(level="info")
 
     # assert
