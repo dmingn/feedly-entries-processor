@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from pydantic import ValidationError
+from pytest_mock import MockerFixture
 from requests.exceptions import RequestException
 
 from feedly_entries_processor.exceptions import (
@@ -22,15 +23,16 @@ from feedly_entries_processor.feedly_client import (
 
 
 @pytest.fixture
-def mock_feedly_session() -> MagicMock:
-    """Fixture for a mock FeedlySession."""
-    session = MagicMock()
+def mock_feedly_session(mocker: MockerFixture) -> MagicMock:
+    session: MagicMock = mocker.MagicMock()
     session.user.id = "test_user_id"
     return session
 
 
-def test_fetch_entries_single_page(mock_feedly_session: MagicMock) -> None:
-    """Test fetching entries with a single page of results."""
+def test_FeedlyClient_fetch_entries_returns_entries_for_single_page(
+    mock_feedly_session: MagicMock,
+) -> None:
+    # arrange
     mock_feedly_session.do_api_request.return_value = {
         "items": [
             {
@@ -65,8 +67,11 @@ def test_fetch_entries_single_page(mock_feedly_session: MagicMock) -> None:
 
     client = FeedlyClient(mock_feedly_session)
     stream_id = "dummy_stream_id"
+
+    # act
     entries = list(client.fetch_entries(stream_id))
 
+    # assert
     expected_entries = [
         Entry(
             id="entry1",
@@ -107,8 +112,10 @@ def test_fetch_entries_single_page(mock_feedly_session: MagicMock) -> None:
     )
 
 
-def test_fetch_entries_multiple_pages(mock_feedly_session: MagicMock) -> None:
-    """Test fetching entries with multiple pages of results."""
+def test_FeedlyClient_fetch_entries_returns_all_entries_for_multiple_pages(
+    mock_feedly_session: MagicMock,
+) -> None:
+    # arrange
     mock_feedly_session.do_api_request.side_effect = [
         # First page
         {
@@ -124,15 +131,17 @@ def test_fetch_entries_multiple_pages(mock_feedly_session: MagicMock) -> None:
 
     client = FeedlyClient(mock_feedly_session)
     stream_id = "dummy_stream_id"
+
+    # act
     entries = list(client.fetch_entries(stream_id))
 
+    # assert
     assert len(entries) == 4
     assert entries[0].id == "entry1"
     assert entries[1].id == "entry2"
     assert entries[2].id == "entry3"
     assert entries[3].id == "entry4"
 
-    # Verify calls
     mock_feedly_session.do_api_request.assert_any_call(
         relative_url="/v3/streams/contents",
         params={
@@ -153,8 +162,10 @@ def test_fetch_entries_multiple_pages(mock_feedly_session: MagicMock) -> None:
     assert mock_feedly_session.do_api_request.call_count == 2
 
 
-def test_fetch_entries_no_entries(mock_feedly_session: MagicMock) -> None:
-    """Test fetching entries when no entries are returned."""
+def test_FeedlyClient_fetch_entries_returns_empty_list_when_no_entries(
+    mock_feedly_session: MagicMock,
+) -> None:
+    # arrange
     mock_feedly_session.do_api_request.return_value = {
         "items": [],
         "continuation": None,
@@ -162,72 +173,90 @@ def test_fetch_entries_no_entries(mock_feedly_session: MagicMock) -> None:
 
     client = FeedlyClient(mock_feedly_session)
     stream_id = "dummy_stream_id"
+
+    # act
     entries = list(client.fetch_entries(stream_id))
 
+    # assert
     assert len(entries) == 0
     mock_feedly_session.do_api_request.assert_called_once()
 
 
-def test_user_id_returns_session_user_id(mock_feedly_session: MagicMock) -> None:
-    """Test that user_id property returns the session user's ID."""
+def test_FeedlyClient_user_id_returns_session_user_id(
+    mock_feedly_session: MagicMock,
+) -> None:
+    # arrange & act
     client = FeedlyClient(mock_feedly_session)
+
+    # assert
     assert client.user_id == "test_user_id"
 
 
-def test_fetch_entries_raises_fetch_entries_error_on_request_exception(
+def test_FeedlyClient_fetch_entries_raises_FetchEntriesError_when_request_raises(
     mock_feedly_session: MagicMock,
 ) -> None:
-    """Test that FetchEntriesError is raised on a RequestException."""
+    # arrange
     mock_feedly_session.do_api_request.side_effect = RequestException
 
     client = FeedlyClient(mock_feedly_session)
+
+    # act & assert
     with pytest.raises(FetchEntriesError):
         list(client.fetch_entries("dummy_stream_id"))
 
 
-def test_fetch_entries_raises_fetch_entries_error_on_validation_error(
+def test_FeedlyClient_fetch_entries_raises_FetchEntriesError_when_validation_fails(
     mock_feedly_session: MagicMock,
 ) -> None:
-    """Test that FetchEntriesError is raised on a ValidationError."""
+    # arrange
     mock_feedly_session.do_api_request.return_value = {
         "items": [{"invalid_field": "foo"}]
     }
 
     client = FeedlyClient(mock_feedly_session)
+
+    # act & assert
     with pytest.raises(FetchEntriesError) as excinfo:
         list(client.fetch_entries("dummy_stream_id"))
 
     assert isinstance(excinfo.value.__cause__, ValidationError)
 
 
-def test_create_feedly_client_success(tmp_path: Path) -> None:
-    """Test that create_feedly_client returns a FeedlyClient on success."""
+def test_create_feedly_client_returns_FeedlyClient_on_success(
+    tmp_path: Path,
+) -> None:
     # Create dummy token files
     (tmp_path / "access.token").write_text("dummy_access_token")
     (tmp_path / "refresh.token").write_text("dummy_refresh_token")
 
+    # act
     client = create_feedly_client(token_dir=tmp_path)
+
+    # assert
     assert isinstance(client, FeedlyClient)
 
 
-def test_create_feedly_client_raises_error_on_missing_dir(tmp_path: Path) -> None:
-    """Test that create_feedly_client raises FeedlyClientInitError on a missing directory."""
+def test_create_feedly_client_raises_FeedlyClientInitError_when_dir_missing(
+    tmp_path: Path,
+) -> None:
     non_existent_dir = tmp_path / "non_existent"
+    # act & assert
     with pytest.raises(FeedlyClientInitError):
         create_feedly_client(token_dir=non_existent_dir)
 
 
-def test_create_feedly_client_raises_error_on_missing_file(tmp_path: Path) -> None:
-    """Test that create_feedly_client raises FeedlyClientInitError on a missing file."""
-    # The directory exists, but is empty
+def test_create_feedly_client_raises_FeedlyClientInitError_when_token_file_missing(
+    tmp_path: Path,
+) -> None:
+    # act & assert: directory exists but is empty
     with pytest.raises(FeedlyClientInitError):
         create_feedly_client(token_dir=tmp_path)
 
 
-def test_create_feedly_client_raises_error_on_permission_error(
+def test_create_feedly_client_raises_FeedlyClientInitError_when_file_unreadable(
     tmp_path: Path,
 ) -> None:
-    """Test FeedlyClientInitError is raised on a PermissionError during init."""
+    # arrange
     access_token_file = tmp_path / "access.token"
     access_token_file.write_text("dummy-token")
 
@@ -235,16 +264,17 @@ def test_create_feedly_client_raises_error_on_permission_error(
     unreadable_mode = stat.S_IWUSR | stat.S_IXUSR
     access_token_file.chmod(unreadable_mode)
 
+    # act & assert
     with pytest.raises(FeedlyClientInitError) as excinfo:
         create_feedly_client(token_dir=tmp_path)
 
     assert isinstance(excinfo.value.__cause__, PermissionError)
 
 
-def test_create_feedly_client_raises_error_on_dir_permission_error(
+def test_create_feedly_client_raises_FeedlyClientInitError_when_dir_unreadable(
     tmp_path: Path,
 ) -> None:
-    """Test FeedlyClientInitError is raised on a directory PermissionError."""
+    # arrange
     token_dir = tmp_path / "unreadable_dir"
     token_dir.mkdir()
     (token_dir / "access.token").write_text("dummy-token")
@@ -253,7 +283,12 @@ def test_create_feedly_client_raises_error_on_dir_permission_error(
     non_executable_mode = stat.S_IRUSR | stat.S_IWUSR
     token_dir.chmod(non_executable_mode)
 
-    with pytest.raises(FeedlyClientInitError) as excinfo:
-        create_feedly_client(token_dir=token_dir)
+    # act & assert
+    try:
+        with pytest.raises(FeedlyClientInitError) as excinfo:
+            create_feedly_client(token_dir=token_dir)
+    finally:
+        # Restore permissions so pytest can clean up tmp_path.
+        token_dir.chmod(0o700)
 
     assert isinstance(excinfo.value.__cause__, PermissionError)
