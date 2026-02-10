@@ -4,14 +4,22 @@ from feedly_entries_processor.conditions import MatchAllCondition
 from feedly_entries_processor.feedly_client import Entry
 
 
-def test_match_all_condition_matches(mock_entry_with_origin: Entry) -> None:
-    """Test that MatchAllCondition always returns True."""
+def test_MatchAllCondition_matches_returns_true_for_entry() -> None:
+    # arrange
+    entry = Entry(id="entry1", title="Test", canonical_url="http://example.com")
     condition = MatchAllCondition(name="match_all")
-    assert condition.matches(mock_entry_with_origin) is True
+
+    # act
+    result = condition.matches(entry)
+
+    # assert
+    assert result is True
 
 
-def test_match_all_condition_pydantic_instantiation() -> None:
-    """Test that MatchAllCondition can be instantiated correctly by Pydantic."""
+def test_MatchAllCondition_can_be_instantiated() -> None:
+    # arrange & act
     condition = MatchAllCondition.model_validate({"name": "match_all"})
+
+    # assert
     assert isinstance(condition, MatchAllCondition)
     assert condition.name == "match_all"
