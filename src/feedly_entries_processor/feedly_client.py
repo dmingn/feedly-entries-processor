@@ -2,6 +2,7 @@
 
 from collections.abc import Generator
 from pathlib import Path
+from urllib.parse import quote
 
 from feedly.api_client.session import FeedlySession, FileAuthStore
 from logzero import logger
@@ -11,6 +12,7 @@ from requests.exceptions import RequestException
 
 from feedly_entries_processor.exceptions import (
     FeedlyClientInitError,
+    FeedlyEntriesProcessorError,
     FetchEntriesError,
 )
 
@@ -126,6 +128,29 @@ class FeedlyClient:
                 break
 
             continuation = stream_contents.continuation
+
+    def remove_entry_from_tag(self, tag_id: str, entry_id: str) -> None:
+        """Remove an entry from a Feedly tag.
+
+        Parameters
+        ----------
+            tag_id: The tag identifier (e.g. global.saved, or a user tag label like tech).
+            entry_id: The ID of the entry to remove.
+
+        Raises
+        ------
+            FeedlyEntriesProcessorError: If there is an error removing the entry.
+        """
+        stream_id_encoded = quote(f"user/{self.user_id}/tag/{tag_id}", safe="")
+        entry_encoded = quote(entry_id, safe="")
+        try:
+            self.feedly_session.do_api_request(
+                relative_url=f"/v3/tags/{stream_id_encoded}/{entry_encoded}",
+                method="DELETE",
+            )
+        except RequestException as e:
+            msg = f"Failed to remove entry {entry_id!r} from tag {tag_id!r}."
+            raise FeedlyEntriesProcessorError(msg) from e
 
 
 def create_feedly_client(token_dir: Path) -> FeedlyClient:
