@@ -269,11 +269,7 @@ def test_add_todoist_task_with_retry_retries_on_retryable_error_then_succeeds(
 def test_add_todoist_task_with_retry_raises_after_three_failures() -> None:
     # arrange: retry_with(wait=0) so tests do not sleep
     mock_client = MagicMock()
-    mock_client.add_task.side_effect = [
-        _make_http_error(503),
-        _make_http_error(503),
-        _make_http_error(503),
-    ]
+    mock_client.add_task.side_effect = _make_http_error(503)
     add_task_no_wait = _add_todoist_task_with_retry.retry_with(  # type: ignore[attr-defined]
         wait=wait_fixed(0),
     )
