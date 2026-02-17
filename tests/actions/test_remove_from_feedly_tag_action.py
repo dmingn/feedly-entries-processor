@@ -85,9 +85,7 @@ def test_RemoveFromFeedlyTagAction_process_calls_remove_entry_from_tag_with_tag_
     action.process(entry)
 
     # assert
-    mock_feedly_client.remove_entry_from_tag.assert_called_once_with(
-        tag, entry_id
-    )
+    mock_feedly_client.remove_entry_from_tag.assert_called_once_with(tag, entry_id)
 
 
 def test_RemoveFromFeedlyTagAction_uses_create_feedly_client(

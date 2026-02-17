@@ -1,11 +1,10 @@
 """Remove from Feedly tag action."""
 
-import os
 from functools import cached_property
-from pathlib import Path
 from typing import Annotated, Literal
 
 from logzero import logger
+from pydantic import Field
 from pydantic.types import StringConstraints
 
 from feedly_entries_processor.actions.base_action import BaseAction
@@ -14,6 +13,7 @@ from feedly_entries_processor.feedly_client import (
     FeedlyClient,
     create_feedly_client,
 )
+from feedly_entries_processor.settings import FeedlySettings
 
 
 class RemoveFromFeedlyTagAction(BaseAction):
@@ -21,19 +21,12 @@ class RemoveFromFeedlyTagAction(BaseAction):
 
     name: Literal["remove_from_feedly_tag"] = "remove_from_feedly_tag"
     tag: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
-    token_dir: Path | None = None
+    feedly_settings: FeedlySettings = Field(default_factory=FeedlySettings)
 
     @cached_property
     def _feedly_client(self) -> FeedlyClient:
         """Initialize and cache the Feedly API client."""
-        return create_feedly_client(self._resolved_token_dir)
-
-    @property
-    def _resolved_token_dir(self) -> Path:
-        """Return the token directory from config or environment."""
-        if self.token_dir is not None:
-            return self.token_dir
-        return Path(os.environ.get("FEEDLY_TOKEN_DIR", "~/.config/feedly")).expanduser()
+        return create_feedly_client(self.feedly_settings.token_dir)
 
     def process(self, entry: Entry) -> None:
         """Process a Feedly entry by removing it from the configured tag."""
