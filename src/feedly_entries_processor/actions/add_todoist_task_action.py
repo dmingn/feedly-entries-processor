@@ -5,12 +5,7 @@ from typing import Literal
 from logzero import logger
 from pydantic import Field
 from requests.exceptions import HTTPError, RequestException
-from tenacity import (
-    retry,
-    retry_if_exception,
-    stop_after_attempt,
-    wait_exponential,
-)
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 from todoist_api_python.api import TodoistAPI
 from todoist_api_python.models import Task
 
@@ -18,14 +13,17 @@ from feedly_entries_processor.actions.base_action import BaseAction
 from feedly_entries_processor.feedly_client import Entry
 from feedly_entries_processor.settings import TodoistSettings
 
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+
 
 def _should_retry_todoist_request(exc: BaseException) -> bool:
     """Return True if the exception is worth retrying (transient/rate limit)."""
-    if isinstance(exc, RequestException) and not isinstance(exc, HTTPError):
-        return True
-    if isinstance(exc, HTTPError) and exc.response is not None:
-        return exc.response.status_code in (429, 500, 502, 503, 504)
-    return False
+    if isinstance(exc, HTTPError):
+        return (
+            exc.response is not None
+            and exc.response.status_code in RETRYABLE_STATUS_CODES
+        )
+    return isinstance(exc, RequestException)
 
 
 @retry(
