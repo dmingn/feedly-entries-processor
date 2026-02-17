@@ -1,6 +1,5 @@
 """Tests for the config_loader module."""
 
-import datetime
 from pathlib import Path
 
 import pytest
@@ -45,7 +44,7 @@ _ACTIONS = (
     LogAction(),
     AddTodoistTaskAction(
         project_id="project_id",
-        due_datetime=datetime.datetime(2026, 1, 1, 0, 0, 0, tzinfo=datetime.UTC),
+        due_string="today",
         priority=1,
         todoist_settings=TodoistSettings.model_construct(
             todoist_api_token=SecretStr(_TODOIST_TEST_TOKEN)

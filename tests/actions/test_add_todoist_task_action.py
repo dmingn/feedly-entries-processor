@@ -1,6 +1,5 @@
 """Tests for the AddTodoistTaskAction."""
 
-import datetime
 from collections.abc import Callable
 from typing import Literal
 from unittest.mock import MagicMock
@@ -31,12 +30,12 @@ def add_todoist_task_action_factory() -> Callable[..., AddTodoistTaskAction]:
     project_id = "test_project_id"
 
     def _factory(
-        due_datetime: datetime.datetime | None = None,
+        due_string: str | None = None,
         priority: Literal[1, 2, 3, 4] | None = None,
     ) -> AddTodoistTaskAction:
         return AddTodoistTaskAction(
             project_id=project_id,
-            due_datetime=due_datetime,
+            due_string=due_string,
             priority=priority,
             todoist_settings=TodoistSettings.model_construct(
                 todoist_api_token=SecretStr("test_token")
@@ -93,7 +92,7 @@ def test_AddTodoistTaskAction_process_creates_task_for_entry(
         content=expected_content,
         project_id=action.project_id,
         priority=None,
-        due_datetime=None,
+        due_string=None,
         description="Test Summary Content",
     )
 
@@ -158,11 +157,11 @@ def test_AddTodoistTaskAction_process_uses_optional_params_when_provided(
     add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
 ) -> None:
     # arrange
-    due_datetime = datetime.datetime(2025, 12, 31, 23, 59, 59, tzinfo=datetime.UTC)
+    due_string = "today"
     priority: Literal[1, 2, 3, 4] = 2  # Use Literal for type hint
 
     action_with_params = add_todoist_task_action_factory(
-        due_datetime=due_datetime, priority=priority
+        due_string=due_string, priority=priority
     )
 
     entry = entry_builder(
@@ -183,6 +182,6 @@ def test_AddTodoistTaskAction_process_uses_optional_params_when_provided(
         content=expected_content,
         project_id=action_with_params.project_id,
         priority=priority,
-        due_datetime=due_datetime,
+        due_string=due_string,
         description="Summary for params",
     )
