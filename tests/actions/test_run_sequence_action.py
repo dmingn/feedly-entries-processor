@@ -58,6 +58,32 @@ def test_RunSequenceAction_process_runs_actions_in_order(
     assert call_order == list(actions)
 
 
+def test_RunSequenceAction_process_runs_nested_sequence_in_order(
+    entry_builder: Callable[..., Entry],
+    mocker: MockerFixture,
+) -> None:
+    # arrange: nested sequence contains action2; outer runs action1, nested, action3
+    call_order: list[LogAction] = []
+
+    def track(self: LogAction, _entry: Entry) -> None:
+        call_order.append(self)
+
+    mocker.patch.object(LogAction, "process", side_effect=track, autospec=True)
+
+    action1 = LogAction()
+    action2 = LogAction()
+    action3 = LogAction()
+    nested = RunSequenceAction(actions=(action2,))
+    sequence = RunSequenceAction(actions=(action1, nested, action3))
+    entry = entry_builder()
+
+    # act
+    sequence.process(entry)
+
+    # assert
+    assert call_order == [action1, action2, action3]
+
+
 def test_RunSequenceAction_process_stops_on_first_failure(
     entry_builder: Callable[..., Entry],
     mocker: MockerFixture,
