@@ -1,4 +1,4 @@
-"""Tests for the RunSequenceAction."""
+"""Tests for the RunInSequenceAction."""
 
 from collections.abc import Callable
 
@@ -6,7 +6,7 @@ import pytest
 from pydantic import ValidationError
 from pytest_mock import MockerFixture
 
-from feedly_entries_processor.actions import LogAction, RunSequenceAction
+from feedly_entries_processor.actions import LogAction, RunInSequenceAction
 from feedly_entries_processor.feedly_client import Entry, Origin, Summary
 
 
@@ -35,7 +35,7 @@ def entry_builder() -> Callable[..., Entry]:
     return _builder
 
 
-def test_RunSequenceAction_process_runs_actions_in_order(
+def test_RunInSequenceAction_process_runs_actions_in_order(
     entry_builder: Callable[..., Entry],
     mocker: MockerFixture,
 ) -> None:
@@ -48,7 +48,7 @@ def test_RunSequenceAction_process_runs_actions_in_order(
     mocker.patch.object(LogAction, "process", side_effect=track, autospec=True)
 
     actions = (LogAction(), LogAction(), LogAction())
-    sequence = RunSequenceAction(actions=actions)
+    sequence = RunInSequenceAction(actions=actions)
     entry = entry_builder()
 
     # act
@@ -58,7 +58,7 @@ def test_RunSequenceAction_process_runs_actions_in_order(
     assert call_order == list(actions)
 
 
-def test_RunSequenceAction_process_runs_nested_sequence_in_order(
+def test_RunInSequenceAction_process_runs_nested_sequence_in_order(
     entry_builder: Callable[..., Entry],
     mocker: MockerFixture,
 ) -> None:
@@ -73,8 +73,8 @@ def test_RunSequenceAction_process_runs_nested_sequence_in_order(
     action1 = LogAction()
     action2 = LogAction()
     action3 = LogAction()
-    nested = RunSequenceAction(actions=(action2,))
-    sequence = RunSequenceAction(actions=(action1, nested, action3))
+    nested = RunInSequenceAction(actions=(action2,))
+    sequence = RunInSequenceAction(actions=(action1, nested, action3))
     entry = entry_builder()
 
     # act
@@ -84,7 +84,7 @@ def test_RunSequenceAction_process_runs_nested_sequence_in_order(
     assert call_order == [action1, action2, action3]
 
 
-def test_RunSequenceAction_process_stops_on_first_failure(
+def test_RunInSequenceAction_process_stops_on_first_failure(
     entry_builder: Callable[..., Entry],
     mocker: MockerFixture,
 ) -> None:
@@ -94,7 +94,7 @@ def test_RunSequenceAction_process_stops_on_first_failure(
         LogAction, "process", side_effect=[None, ValueError(msg)]
     )
 
-    sequence = RunSequenceAction(actions=(LogAction(), LogAction(), LogAction()))
+    sequence = RunInSequenceAction(actions=(LogAction(), LogAction(), LogAction()))
     entry = entry_builder()
 
     # act & assert
@@ -104,7 +104,7 @@ def test_RunSequenceAction_process_stops_on_first_failure(
     assert mock_process.call_count == 2
 
 
-def test_RunSequenceAction_rejects_empty_actions() -> None:
+def test_RunInSequenceAction_rejects_empty_actions() -> None:
     # act & assert
     with pytest.raises(ValidationError):
-        RunSequenceAction(actions=())
+        RunInSequenceAction(actions=())
