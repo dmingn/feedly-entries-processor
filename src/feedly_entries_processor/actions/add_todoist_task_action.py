@@ -1,6 +1,5 @@
 """Add Todoist task action."""
 
-import datetime
 from typing import Literal
 
 from logzero import logger
@@ -17,7 +16,7 @@ class AddTodoistTaskAction(BaseAction):
 
     name: Literal["add_todoist_task"] = "add_todoist_task"
     project_id: str
-    due_datetime: datetime.datetime | None = None
+    due_string: str | None = None
     priority: Literal[1, 2, 3, 4] | None = None
     todoist_settings: TodoistSettings = Field(default_factory=TodoistSettings)
 
@@ -40,7 +39,7 @@ class AddTodoistTaskAction(BaseAction):
             content=task_content,
             project_id=self.project_id,
             priority=self.priority,
-            due_datetime=self.due_datetime,
+            due_string=self.due_string,
             description=entry.summary.content if entry.summary else None,
         )
 
