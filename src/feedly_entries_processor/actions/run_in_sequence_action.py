@@ -1,4 +1,4 @@
-"""Run sequence action."""
+"""Run in sequence action."""
 
 from __future__ import annotations
 
@@ -13,14 +13,14 @@ if TYPE_CHECKING:
     from feedly_entries_processor.feedly_client import Entry
 
 
-class RunSequenceAction(BaseAction):
+class RunInSequenceAction(BaseAction):
     """An action that runs multiple actions in sequence.
 
     If any action raises an exception, subsequent actions are not executed
     and the exception is propagated.
     """
 
-    name: Literal["run_sequence"] = "run_sequence"
+    name: Literal["run_in_sequence"] = "run_in_sequence"
     actions: tuple[Action, ...] = Field(min_length=1)
 
     def process(self, entry: Entry) -> None:

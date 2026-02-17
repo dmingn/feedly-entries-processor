@@ -7,17 +7,17 @@ from feedly_entries_processor.actions.log_action import LogAction
 from feedly_entries_processor.actions.remove_from_feedly_tag_action import (
     RemoveFromFeedlyTagAction,
 )
-from feedly_entries_processor.actions.run_sequence_action import RunSequenceAction
+from feedly_entries_processor.actions.run_in_sequence_action import RunInSequenceAction
 
 __all__ = [
     "AddTodoistTaskAction",
     "LogAction",
     "RemoveFromFeedlyTagAction",
-    "RunSequenceAction",
+    "RunInSequenceAction",
 ]
 
 Action = (
-    LogAction | AddTodoistTaskAction | RemoveFromFeedlyTagAction | RunSequenceAction
+    LogAction | AddTodoistTaskAction | RemoveFromFeedlyTagAction | RunInSequenceAction
 )
 
-RunSequenceAction.model_rebuild()
+RunInSequenceAction.model_rebuild()
