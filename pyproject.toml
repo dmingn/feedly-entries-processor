@@ -8,21 +8,21 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "feedly-client>=0.26,<0.28",
-    "logzero>=1.7.0,<2.0.0",
-    "pydantic>=2.11.7,<3.0.0",
-    "pydantic-settings>=2.0.0,<3.0.0",
-    "pydantic-yaml>=1.6.0,<2.0.0",
+    "feedly-client>=0.26",
+    "logzero>=1.7.0",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.0.0",
+    "pydantic-yaml>=1.6.0",
     "tenacity>=9.1.4",
-    "todoist-api-python>=3.1.0,<4.0.0",
-    "typer>=0.16.0,<0.25.0",
+    "todoist-api-python>=3.1.0",
+    "typer>=0.16.0",
 ]
 
 [project.scripts]
 feedly-entries-processor = "feedly_entries_processor.__main__:app"
 
 [build-system]
-requires = ["uv_build>=0.9.22,<0.11.0"]
+requires = ["uv_build>=0.9.22"]
 build-backend = "uv_build"
 
 [dependency-groups]
