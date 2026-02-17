@@ -16,7 +16,7 @@ from feedly_entries_processor.sources import SavedSource
 runner = CliRunner()
 
 
-def test_main_runs_process_with_given_config_and_token_dir(
+def test_main_runs_process_with_given_config(
     mocker: MockerFixture,
     tmp_path: Path,
 ) -> None:
@@ -25,24 +25,13 @@ def test_main_runs_process_with_given_config_and_token_dir(
 
     config_file = tmp_path / "config.yml"
     config_file.touch()
-    token_dir = tmp_path / "tokens"
-    token_dir.mkdir()
 
     # act
-    result = runner.invoke(
-        app,
-        [
-            str(config_file),
-            "--token-dir",
-            str(token_dir),
-        ],
-    )
+    result = runner.invoke(app, [str(config_file)])
 
     # assert
     assert result.exit_code == 0, result.output
-    mock_process.assert_called_once_with(
-        config_files=[config_file], token_dir=token_dir
-    )
+    mock_process.assert_called_once_with(config_files=[config_file])
 
 
 def test_main_shows_config_schema_when_option_given() -> None:

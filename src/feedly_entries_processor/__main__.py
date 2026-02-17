@@ -35,10 +35,6 @@ def main(
         list[Path],
         typer.Argument(exists=True, file_okay=True, dir_okay=True),
     ],
-    token_dir: Annotated[
-        Path | None,
-        typer.Option(exists=True, file_okay=False),
-    ] = None,
     *,
     json_log: Annotated[
         bool,
@@ -75,11 +71,8 @@ def main(
         typer.echo("Configuration is valid.")
         raise typer.Exit
 
-    if token_dir is None:
-        token_dir = Path.home() / ".config" / "feedly"
-
     try:
-        process(config_files=config_files, token_dir=token_dir)
+        process(config_files=config_files)
     except FeedlyEntriesProcessorError:
         logger.exception("An error occurred during Feedly entries processing.")
         raise typer.Exit(code=1) from None

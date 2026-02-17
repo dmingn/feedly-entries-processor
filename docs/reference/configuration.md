@@ -32,7 +32,7 @@ Available action types:
 | `add_todoist_task`      | Adds entry as a task in Todoist                    | `project_id` (required), `due_datetime`, `priority` (1–4) |
 | `remove_from_feedly_tag` | Removes entry from a Feedly tag (e.g. saved). **There is no undo.** | `tag` (required), `token_dir` (optional) |
 
-When using the Todoist action, set the `TODOIST_API_TOKEN` environment variable.
+When using the `add_todoist_task` action, set the `TODOIST_API_TOKEN` environment variable (or add it to a `.env` file).
 
 For `remove_from_feedly_tag`, set `tag` to `"global.saved"` for the built-in saved list, or to a tag label (e.g. `tech`) for user-created tags. When `token_dir` is omitted, the client uses the `FEEDLY_TOKEN_DIR` environment variable or `~/.config/feedly`.
 

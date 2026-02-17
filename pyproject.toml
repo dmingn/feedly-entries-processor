@@ -11,6 +11,7 @@ dependencies = [
     "feedly-client>=0.26,<0.28",
     "logzero>=1.7.0,<2.0.0",
     "pydantic>=2.11.7,<3.0.0",
+    "pydantic-settings>=2.0.0,<3.0.0",
     "pydantic-yaml>=1.6.0,<2.0.0",
     "todoist-api-python>=3.1.0,<4.0.0",
     "typer>=0.16.0,<0.22.0",

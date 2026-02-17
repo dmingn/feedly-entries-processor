@@ -24,11 +24,11 @@ feedly-entries-processor config1.yaml config2.yaml ./rules/
 
 ### Custom token directory
 
-By default, tokens are read from `~/.config/feedly`. To use a different directory, pass `--token-dir`:
+By default, tokens are read from `~/.config/feedly`. To use a different directory, set the `FEEDLY_TOKEN_DIR` environment variable (or add it to a `.env` file in the current directory).
 
-```bash
-feedly-entries-processor --token-dir /path/to/tokens config.yaml
-```
+### Todoist API token
+
+When using the `add_todoist_task` action, set the `TODOIST_API_TOKEN` environment variable (or add it to a `.env` file in the current directory).
 
 ### JSON log output
 
