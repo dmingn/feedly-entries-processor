@@ -26,12 +26,16 @@ Each rule has an action that is executed when the condition matches.
 
 Available action types:
 
-| Name               | Description                     | Parameters                                                |
-| ------------------ | ------------------------------- | --------------------------------------------------------- |
-| `log`              | Logs entry details              | `level`: `info`, `debug`, `warning`, or `error`           |
-| `add_todoist_task` | Adds entry as a task in Todoist | `project_id` (required), `due_datetime`, `priority` (1–4) |
+| Name                    | Description                                        | Parameters                                                |
+| ----------------------- | -------------------------------------------------- | --------------------------------------------------------- |
+| `log`                   | Logs entry details                                 | `level`: `info`, `debug`, `warning`, or `error`           |
+| `add_todoist_task`      | Adds entry as a task in Todoist                    | `project_id` (required), `due_datetime`, `priority` (1–4) |
+| `remove_from_feedly_tag` | Removes entry from a Feedly tag (e.g. saved). **There is no undo.** | `tag` (required) |
+| `run_sequence`          | Runs multiple actions in sequence; stops on first failure | `actions`: list of action objects                        |
 
 When using the `add_todoist_task` action, set the `TODOIST_API_TOKEN` environment variable (or add it to a `.env` file).
+
+For `remove_from_feedly_tag`, set `tag` to `"global.saved"` for the built-in saved list, or to a tag label (e.g. `tech`) for user-created tags. The Feedly token directory is read from the `FEEDLY_TOKEN_DIR` environment variable (default: `~/.config/feedly`), as with other Feedly usage.
 
 ### Schema
 
@@ -73,4 +77,17 @@ rules:
     action:
       name: "log"
       level: "info"
+
+  - name: "Add to Todoist then remove from saved"
+    source:
+      name: "saved"
+    condition:
+      name: "match_all"
+    action:
+      name: "run_sequence"
+      actions:
+        - name: "add_todoist_task"
+          project_id: "YOUR_PROJECT_ID"
+        - name: "remove_from_feedly_tag"
+          tag: "global.saved"
 ```

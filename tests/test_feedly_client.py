@@ -11,6 +11,7 @@ from requests.exceptions import RequestException
 
 from feedly_entries_processor.exceptions import (
     FeedlyClientInitError,
+    FeedlyEntriesProcessorError,
     FetchEntriesError,
 )
 from feedly_entries_processor.feedly_client import (
@@ -292,3 +293,34 @@ def test_create_feedly_client_raises_FeedlyClientInitError_when_dir_unreadable(
         token_dir.chmod(0o700)
 
     assert isinstance(excinfo.value.__cause__, PermissionError)
+
+
+def test_FeedlyClient_remove_entry_from_tag_calls_delete_with_encoded_path(
+    mock_feedly_session: MagicMock,
+) -> None:
+    # arrange: client builds user/{user_id}/tag/{tag_id} from tag_id
+    mock_feedly_session.do_api_request.return_value = None
+    client = FeedlyClient(mock_feedly_session)
+    tag_id = "global.saved"
+    entry_id = "entry_abc=123"
+
+    # act
+    client.remove_entry_from_tag(tag_id, entry_id)
+
+    # assert
+    mock_feedly_session.do_api_request.assert_called_once_with(
+        relative_url="/v3/tags/user%2Ftest_user_id%2Ftag%2Fglobal.saved/entry_abc%3D123",
+        method="DELETE",
+    )
+
+
+def test_FeedlyClient_remove_entry_from_tag_raises_FeedlyEntriesProcessorError_when_request_raises(
+    mock_feedly_session: MagicMock,
+) -> None:
+    # arrange
+    mock_feedly_session.do_api_request.side_effect = RequestException
+    client = FeedlyClient(mock_feedly_session)
+
+    # act & assert
+    with pytest.raises(FeedlyEntriesProcessorError):
+        client.remove_entry_from_tag("global.saved", "entry1")

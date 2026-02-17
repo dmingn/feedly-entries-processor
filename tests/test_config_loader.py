@@ -8,7 +8,11 @@ from pydantic import SecretStr, ValidationError
 from pydantic_yaml import to_yaml_str
 from ruamel.yaml.error import YAMLError
 
-from feedly_entries_processor.actions import AddTodoistTaskAction, LogAction
+from feedly_entries_processor.actions import (
+    AddTodoistTaskAction,
+    LogAction,
+    RunSequenceAction,
+)
 from feedly_entries_processor.conditions import (
     MatchAllCondition,
     StreamIdInListCondition,
@@ -47,6 +51,7 @@ _ACTIONS = (
             todoist_api_token=SecretStr(_TODOIST_TEST_TOKEN)
         ),
     ),
+    RunSequenceAction(actions=(LogAction(),)),
 )
 
 
