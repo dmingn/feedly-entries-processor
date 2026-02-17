@@ -26,12 +26,15 @@ Each rule has an action that is executed when the condition matches.
 
 Available action types:
 
-| Name               | Description                     | Parameters                                                |
-| ------------------ | ------------------------------- | --------------------------------------------------------- |
-| `log`              | Logs entry details              | `level`: `info`, `debug`, `warning`, or `error`           |
-| `add_todoist_task` | Adds entry as a task in Todoist | `project_id` (required), `due_datetime`, `priority` (1–4) |
+| Name                    | Description                                        | Parameters                                                |
+| ----------------------- | -------------------------------------------------- | --------------------------------------------------------- |
+| `log`                   | Logs entry details                                 | `level`: `info`, `debug`, `warning`, or `error`           |
+| `add_todoist_task`      | Adds entry as a task in Todoist                    | `project_id` (required), `due_datetime`, `priority` (1–4) |
+| `remove_from_feedly_tag` | Removes entry from a Feedly tag (e.g. saved). **There is no undo.** | `tag` (required) |
 
 When using the `add_todoist_task` action, set the `TODOIST_API_TOKEN` environment variable (or add it to a `.env` file).
+
+For `remove_from_feedly_tag`, set `tag` to `"global.saved"` for the built-in saved list, or to a tag label (e.g. `tech`) for user-created tags. The Feedly token directory is read from the `FEEDLY_TOKEN_DIR` environment variable (default: `~/.config/feedly`), as with other Feedly usage.
 
 ### Schema
 
