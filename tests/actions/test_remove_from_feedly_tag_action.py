@@ -89,17 +89,16 @@ def test_RemoveFromFeedlyTagAction_process_calls_remove_entry_from_tag_with_tag_
 
 
 def test_RemoveFromFeedlyTagAction_uses_create_feedly_client(
-    mock_feedly_client: MagicMock,
     entry_builder: Callable[..., Entry],
     mocker: MockerFixture,
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     # arrange
     create_feedly_client = mocker.patch(
         "feedly_entries_processor.actions.remove_from_feedly_tag_action.create_feedly_client",
-        return_value=mock_feedly_client,
     )
-    mocker.patch.dict("os.environ", {"FEEDLY_TOKEN_DIR": str(tmp_path)})
+    monkeypatch.setenv("FEEDLY_TOKEN_DIR", str(tmp_path))
     action = RemoveFromFeedlyTagAction(tag="global.saved")
     entry = entry_builder()
 
