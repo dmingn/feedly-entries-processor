@@ -32,7 +32,7 @@ The tool uses the [feedly-client](https://github.com/feedly/python-api-client) `
 
 Place `access.token` and `refresh.token` in that directory. Obtain these tokens via the Feedly Developer Token or OAuth flow (see the Feedly Python API client documentation).
 
-If you want to use a different directory, pass `--token-dir` when running the CLI.
+To use a different directory, set the `FEEDLY_TOKEN_DIR` environment variable (or add it to a `.env` file).
 
 ### 4. Create a minimal rule file
 

@@ -8,6 +8,7 @@ from logzero import logger
 
 from feedly_entries_processor.config_loader import Rule, load_config
 from feedly_entries_processor.feedly_client import Entry, create_feedly_client
+from feedly_entries_processor.settings import FeedlySettings
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -42,11 +43,12 @@ def process_entries(entries: Iterable[Entry], rules: Iterable[Rule]) -> None:
             process_entry(entry, rule)
 
 
-def process(config_files: list[Path], token_dir: Path) -> None:
+def process(config_files: list[Path]) -> None:
     """Process entries."""
     config = load_config(config_files)
     logger.info(f"Loaded {len(config.rules)} rules from {len(config_files)} sources")
 
+    token_dir = FeedlySettings().token_dir
     client = create_feedly_client(token_dir)
 
     rules_by_source: dict[StreamSource, set[Rule]] = {}

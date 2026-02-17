@@ -4,7 +4,7 @@ import datetime
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 from pydantic_yaml import to_yaml_str
 from ruamel.yaml.error import YAMLError
 
@@ -20,9 +20,11 @@ from feedly_entries_processor.config_loader import (
     load_config_file,
 )
 from feedly_entries_processor.exceptions import ConfigError
+from feedly_entries_processor.settings import TodoistSettings
 from feedly_entries_processor.sources import AllSource, SavedSource
 
 TEST_CONFIGS_PATH = Path(__file__).parent / "test_configs"
+_TODOIST_TEST_TOKEN = "todoist_test_token"  # noqa: S105
 
 # Defaults when not varying that dimension (used for round-trip coverage).
 _DEFAULT_SOURCE = AllSource()
@@ -41,6 +43,9 @@ _ACTIONS = (
         project_id="project_id",
         due_datetime=datetime.datetime(2026, 1, 1, 0, 0, 0, tzinfo=datetime.UTC),
         priority=1,
+        todoist_settings=TodoistSettings.model_construct(
+            todoist_api_token=SecretStr(_TODOIST_TEST_TOKEN)
+        ),
     ),
 )
 
@@ -53,6 +58,11 @@ def _save_config(config: Config, file_path: Path) -> None:
         file_path: The path to the YAML file where the configuration will be saved.
     """
     file_path.write_text(to_yaml_str(config), encoding="utf-8")
+
+
+@pytest.fixture(autouse=True)
+def mock_os_environ(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TODOIST_API_TOKEN", _TODOIST_TEST_TOKEN)
 
 
 @pytest.fixture

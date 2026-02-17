@@ -31,7 +31,7 @@ Available action types:
 | `log`              | Logs entry details              | `level`: `info`, `debug`, `warning`, or `error`           |
 | `add_todoist_task` | Adds entry as a task in Todoist | `project_id` (required), `due_datetime`, `priority` (1–4) |
 
-When using the Todoist action, set the `TODOIST_API_TOKEN` environment variable.
+When using the `add_todoist_task` action, set the `TODOIST_API_TOKEN` environment variable (or add it to a `.env` file).
 
 ### Schema
 

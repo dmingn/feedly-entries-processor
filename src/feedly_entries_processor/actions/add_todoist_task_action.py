@@ -1,15 +1,15 @@
 """Add Todoist task action."""
 
 import datetime
-import os
-from functools import cached_property
 from typing import Literal
 
 from logzero import logger
+from pydantic import Field
 from todoist_api_python.api import TodoistAPI
 
 from feedly_entries_processor.actions.base_action import BaseAction
 from feedly_entries_processor.feedly_client import Entry
+from feedly_entries_processor.settings import TodoistSettings
 
 
 class AddTodoistTaskAction(BaseAction):
@@ -19,25 +19,24 @@ class AddTodoistTaskAction(BaseAction):
     project_id: str
     due_datetime: datetime.datetime | None = None
     priority: Literal[1, 2, 3, 4] | None = None
-
-    @cached_property
-    def _todoist_client(self) -> TodoistAPI:
-        """Initialize and cache the Todoist API client."""
-        api_token = os.environ.get("TODOIST_API_TOKEN")
-        if not api_token:
-            error_message = "TODOIST_API_TOKEN environment variable must be set"
-            raise ValueError(error_message)
-        return TodoistAPI(api_token)
+    todoist_settings: TodoistSettings = Field(default_factory=TodoistSettings)
 
     def process(self, entry: Entry) -> None:
         """Process a Feedly entry by adding it as a task to Todoist."""
+        if self.todoist_settings.todoist_api_token is None:
+            error_message = "TODOIST_API_TOKEN must be set (e.g. via environment or .env) when using add_todoist_task action"
+            raise ValueError(error_message)
+
         if entry.canonical_url is None:
             error_message = "Entry must have a canonical_url to be processed by AddTodoistTaskAction."
             raise ValueError(error_message)
 
+        api_token = self.todoist_settings.todoist_api_token.get_secret_value()
+        client = TodoistAPI(api_token)
+
         task_content = f"{entry.title} - {entry.canonical_url}"
 
-        task = self._todoist_client.add_task(
+        task = client.add_task(
             content=task_content,
             project_id=self.project_id,
             priority=self.priority,

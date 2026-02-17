@@ -6,12 +6,14 @@ from typing import Literal
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import SecretStr
 from pytest_mock import MockerFixture
 
 from feedly_entries_processor.actions.add_todoist_task_action import (
     AddTodoistTaskAction,
 )
 from feedly_entries_processor.feedly_client import Entry, Origin, Summary
+from feedly_entries_processor.settings import TodoistSettings
 
 
 @pytest.fixture
@@ -24,11 +26,8 @@ def mock_todoist_api(mocker: MockerFixture) -> MagicMock:
 
 
 @pytest.fixture
-def add_todoist_task_action_factory(
-    mocker: MockerFixture,
-) -> Callable[..., AddTodoistTaskAction]:
+def add_todoist_task_action_factory() -> Callable[..., AddTodoistTaskAction]:
     """Fixture for AddTodoistTaskAction factory."""
-    mocker.patch.dict("os.environ", {"TODOIST_API_TOKEN": "test_token"})
     project_id = "test_project_id"
 
     def _factory(
@@ -36,7 +35,12 @@ def add_todoist_task_action_factory(
         priority: Literal[1, 2, 3, 4] | None = None,
     ) -> AddTodoistTaskAction:
         return AddTodoistTaskAction(
-            project_id=project_id, due_datetime=due_datetime, priority=priority
+            project_id=project_id,
+            due_datetime=due_datetime,
+            priority=priority,
+            todoist_settings=TodoistSettings.model_construct(
+                todoist_api_token=SecretStr("test_token")
+            ),
         )
 
     return _factory
@@ -68,21 +72,6 @@ def entry_builder() -> Callable[..., Entry]:
     return _builder
 
 
-def test_AddTodoistTaskAction_initializes_todoist_client_on_first_access(
-    mock_todoist_api: MagicMock,
-    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
-) -> None:
-    # arrange
-    action = add_todoist_task_action_factory()
-
-    # act
-    client = action._todoist_client  # noqa: SLF001
-
-    # assert
-    assert client is not None
-    assert client == mock_todoist_api.return_value
-
-
 def test_AddTodoistTaskAction_process_creates_task_for_entry(
     mock_todoist_api: MagicMock,
     add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
@@ -107,6 +96,24 @@ def test_AddTodoistTaskAction_process_creates_task_for_entry(
         due_datetime=None,
         description="Test Summary Content",
     )
+
+
+def test_AddTodoistTaskAction_process_raises_ValueError_when_todoist_api_token_is_not_set(
+    entry_builder: Callable[..., Entry],
+) -> None:
+    # arrange: action with no token
+    action = AddTodoistTaskAction(
+        project_id="test_project_id",
+        todoist_settings=TodoistSettings.model_construct(todoist_api_token=None),
+    )
+    entry = entry_builder()
+
+    # act & assert
+    with pytest.raises(
+        ValueError,
+        match=r"TODOIST_API_TOKEN must be set",
+    ):
+        action.process(entry)
 
 
 def test_AddTodoistTaskAction_process_raises_ValueError_for_entry_without_canonical_url(
