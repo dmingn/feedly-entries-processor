@@ -70,7 +70,12 @@ class StreamContents(BaseModel):
 
 
 class FeedlyClient:
-    """Feedly client for fetching entries."""
+    """Feedly client for fetching entries.
+
+    Retries for Feedly API calls are handled by FeedlySession (feedly-client):
+    up to 3 attempts with exponential backoff, and HTTPAdapter(max_retries=1)
+    for connection errors.
+    """
 
     def __init__(self, feedly_session: FeedlySession) -> None:
         self.feedly_session = feedly_session
