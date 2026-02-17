@@ -10,7 +10,7 @@ from ruamel.yaml.error import YAMLError
 from feedly_entries_processor.actions import (
     AddTodoistTaskAction,
     LogAction,
-    RunSequenceAction,
+    RunInSequenceAction,
 )
 from feedly_entries_processor.conditions import (
     MatchAllCondition,
@@ -50,7 +50,7 @@ _ACTIONS = (
             todoist_api_token=SecretStr(_TODOIST_TEST_TOKEN)
         ),
     ),
-    RunSequenceAction(actions=(LogAction(),)),
+    RunInSequenceAction(actions=(LogAction(),)),
 )
 
 

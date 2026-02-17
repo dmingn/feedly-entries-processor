@@ -31,7 +31,7 @@ Available action types:
 | `log`                   | Logs entry details                                 | `level`: `info`, `debug`, `warning`, or `error`           |
 | `add_todoist_task`      | Adds entry as a task in Todoist                    | `project_id` (required), `due_string`, `priority` (1–4) |
 | `remove_from_feedly_tag` | Removes entry from a Feedly tag (e.g. saved). **There is no undo.** | `tag` (required) |
-| `run_sequence`          | Runs multiple actions in sequence; stops on first failure | `actions`: list of action objects                        |
+| `run_in_sequence`       | Runs multiple actions in sequence; stops on first failure | `actions`: list of action objects                        |
 
 When using the `add_todoist_task` action, set the `TODOIST_API_TOKEN` environment variable (or add it to a `.env` file).
 
@@ -84,7 +84,7 @@ rules:
     condition:
       name: "match_all"
     action:
-      name: "run_sequence"
+      name: "run_in_sequence"
       actions:
         - name: "add_todoist_task"
           project_id: "YOUR_PROJECT_ID"
