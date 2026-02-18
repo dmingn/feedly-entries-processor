@@ -4,16 +4,44 @@ from typing import Literal
 
 from logzero import logger
 from pydantic import Field
+from requests import Response
 from requests.exceptions import HTTPError, RequestException
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 from todoist_api_python.api import TodoistAPI
 from todoist_api_python.models import Task
 
 from feedly_entries_processor.actions.base_action import BaseAction
+from feedly_entries_processor.exceptions import TodoistApiError
 from feedly_entries_processor.feedly_client import Entry
 from feedly_entries_processor.settings import TodoistSettings
 
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+
+
+def _response_error_body(response: Response) -> object:
+    """Parse JSON body or fall back to raw text."""
+    try:
+        return response.json()
+    except ValueError:
+        return response.text
+
+
+def _todoist_error_details(
+    response: Response | None,
+    project_id: str,
+) -> dict[str, object]:
+    """Build a details dict from an HTTPError's response (or None)."""
+    if response is None:
+        return {
+            "status_code": "unknown",
+            "error_body": "<no response>",
+            "project_id": project_id,
+        }
+    return {
+        "status_code": response.status_code,
+        "error_body": _response_error_body(response),
+        "project_id": project_id,
+    }
 
 
 def _should_retry_todoist_request(exc: BaseException) -> bool:
@@ -75,13 +103,18 @@ class AddTodoistTaskAction(BaseAction):
 
         task_content = f"{entry.title} - {entry.canonical_url}"
 
-        task = _add_todoist_task_with_retry(
-            client,
-            content=task_content,
-            project_id=self.project_id,
-            priority=self.priority,
-            due_string=self.due_string,
-            description=entry.summary.content if entry.summary else None,
-        )
+        try:
+            task = _add_todoist_task_with_retry(
+                client,
+                content=task_content,
+                project_id=self.project_id,
+                priority=self.priority,
+                due_string=self.due_string,
+                description=entry.summary.content if entry.summary else None,
+            )
+        except HTTPError as exc:
+            details = _todoist_error_details(exc.response, self.project_id)
+            message = f"Todoist API request failed with status {details['status_code']}"
+            raise TodoistApiError(message, details=details) from exc
 
         logger.info(f"Added task to Todoist: {task.content} (ID: {task.id})")
