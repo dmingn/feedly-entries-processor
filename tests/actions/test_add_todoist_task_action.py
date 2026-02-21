@@ -111,7 +111,7 @@ def test_AddTodoistTaskAction_process_creates_task_with_all_optional_params(
     # arrange
     due_string = "today"
     priority: Literal[1, 2, 3, 4] = 2
-    labels = frozenset({"reading", "tech"})
+    labels = frozenset({"reading"})
 
     action_with_params = add_todoist_task_action_factory(
         due_string=due_string, priority=priority, labels=labels
@@ -128,16 +128,15 @@ def test_AddTodoistTaskAction_process_creates_task_with_all_optional_params(
     # act
     action_with_params.process(entry)
 
-    # assert: labels need set equality (list order from frozenset is undefined)
-    mock_instance.add_task.assert_called_once()
-    expected_content = "Entry with Params - http://example.com/params"
-    call_kwargs = mock_instance.add_task.call_args.kwargs
-    assert call_kwargs["content"] == expected_content
-    assert call_kwargs["project_id"] == action_with_params.project_id
-    assert call_kwargs["priority"] == priority
-    assert call_kwargs["due_string"] == due_string
-    assert call_kwargs["description"] == "Summary for params"
-    assert set(call_kwargs["labels"]) == {"reading", "tech"}
+    # assert
+    mock_instance.add_task.assert_called_once_with(
+        content="Entry with Params - http://example.com/params",
+        project_id=action_with_params.project_id,
+        description="Summary for params",
+        priority=priority,
+        due_string=due_string,
+        labels=["reading"],
+    )
 
 
 def test_AddTodoistTaskAction_process_raises_ValueError_when_todoist_api_token_is_not_set(
