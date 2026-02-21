@@ -4,53 +4,12 @@ from typing import Literal
 
 from logzero import logger
 from pydantic import Field
-from requests.exceptions import HTTPError, RequestException
-from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 from todoist_api_python.api import TodoistAPI
-from todoist_api_python.models import Task
 
 from feedly_entries_processor.actions.base_action import BaseAction
 from feedly_entries_processor.feedly_client import Entry
 from feedly_entries_processor.settings import TodoistSettings
-
-RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
-
-
-def _should_retry_todoist_request(exc: BaseException) -> bool:
-    """Return True if the exception is worth retrying (transient/rate limit)."""
-    if isinstance(exc, HTTPError):
-        return (
-            exc.response is not None
-            and exc.response.status_code in RETRYABLE_STATUS_CODES
-        )
-    return isinstance(exc, RequestException)
-
-
-@retry(
-    reraise=True,
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=1, max=10),
-    retry=retry_if_exception(_should_retry_todoist_request),
-)
-def _add_todoist_task_with_retry(  # noqa: PLR0913
-    client: TodoistAPI,
-    *,
-    content: str,
-    project_id: str,
-    priority: Literal[1, 2, 3, 4] | None = None,
-    due_string: str | None = None,
-    description: str | None = None,
-    labels: frozenset[str] | None = None,
-) -> Task:
-    """Call Todoist add_task with retry on transient and rate-limit errors."""
-    return client.add_task(
-        content=content,
-        project_id=project_id,
-        priority=priority,
-        due_string=due_string,
-        description=description,
-        labels=list(labels) if labels else None,
-    )
+from feedly_entries_processor.todoist_client import add_task_with_retry
 
 
 class AddTodoistTaskAction(BaseAction):
@@ -78,7 +37,7 @@ class AddTodoistTaskAction(BaseAction):
 
         task_content = f"{entry.title} - {entry.canonical_url}"
 
-        task = _add_todoist_task_with_retry(
+        task = add_task_with_retry(
             client,
             content=task_content,
             project_id=self.project_id,
