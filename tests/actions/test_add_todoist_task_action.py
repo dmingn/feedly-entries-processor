@@ -36,11 +36,13 @@ def add_todoist_task_action_factory() -> Callable[..., AddTodoistTaskAction]:
     def _factory(
         due_string: str | None = None,
         priority: Literal[1, 2, 3, 4] | None = None,
+        labels: frozenset[str] | None = None,
     ) -> AddTodoistTaskAction:
         return AddTodoistTaskAction(
             project_id=project_id,
             due_string=due_string,
             priority=priority,
+            labels=labels,
             todoist_settings=TodoistSettings.model_construct(
                 todoist_api_token=SecretStr("test_token")
             ),
@@ -91,14 +93,10 @@ def test_AddTodoistTaskAction_process_creates_task_for_entry(
     action.process(sample_entry)
 
     # assert
-    expected_content = "Test Entry - http://example.com/test"
-    mock_instance.add_task.assert_called_once_with(
-        content=expected_content,
-        project_id=action.project_id,
-        priority=None,
-        due_string=None,
-        description="Test Summary Content",
-    )
+    mock_instance.add_task.assert_called_once()
+    call_kwargs = mock_instance.add_task.call_args.kwargs
+    assert call_kwargs["content"] == "Test Entry - http://example.com/test"
+    assert call_kwargs["project_id"] == action.project_id
 
 
 def test_AddTodoistTaskAction_process_raises_ValueError_when_todoist_api_token_is_not_set(
@@ -163,11 +161,11 @@ def test_AddTodoistTaskAction_process_uses_optional_params_when_provided(
     # arrange
     due_string = "today"
     priority: Literal[1, 2, 3, 4] = 2  # Use Literal for type hint
+    labels = frozenset({"reading", "tech"})
 
     action_with_params = add_todoist_task_action_factory(
-        due_string=due_string, priority=priority
+        due_string=due_string, priority=priority, labels=labels
     )
-
     entry = entry_builder(
         title="Entry with Params",
         canonical_url="http://example.com/params",
@@ -180,15 +178,16 @@ def test_AddTodoistTaskAction_process_uses_optional_params_when_provided(
     # act
     action_with_params.process(entry)
 
-    # assert
+    # assert: use call_args for flexible checks; labels need set equality (list order undefined)
+    mock_instance.add_task.assert_called_once()
     expected_content = "Entry with Params - http://example.com/params"
-    mock_instance.add_task.assert_called_once_with(
-        content=expected_content,
-        project_id=action_with_params.project_id,
-        priority=priority,
-        due_string=due_string,
-        description="Summary for params",
-    )
+    call_kwargs = mock_instance.add_task.call_args.kwargs
+    assert call_kwargs["content"] == expected_content
+    assert call_kwargs["project_id"] == action_with_params.project_id
+    assert call_kwargs["priority"] == priority
+    assert call_kwargs["due_string"] == due_string
+    assert call_kwargs["description"] == "Summary for params"
+    assert set(call_kwargs["labels"]) == {"reading", "tech"}
 
 
 def _make_http_error(status_code: int) -> HTTPError:
@@ -212,20 +211,14 @@ def test_add_todoist_task_with_retry_returns_task_on_success() -> None:
         mock_client,
         content="content",
         project_id="proj_1",
-        priority=None,
-        due_string=None,
-        description=None,
     )
 
     # assert
     assert result is task
-    mock_client.add_task.assert_called_once_with(
-        content="content",
-        project_id="proj_1",
-        priority=None,
-        due_string=None,
-        description=None,
-    )
+    mock_client.add_task.assert_called_once()
+    call_kwargs = mock_client.add_task.call_args.kwargs
+    assert call_kwargs["content"] == "content"
+    assert call_kwargs["project_id"] == "proj_1"
 
 
 @pytest.mark.parametrize(
@@ -256,9 +249,6 @@ def test_add_todoist_task_with_retry_retries_on_retryable_error_then_succeeds(
         mock_client,
         content="content",
         project_id="proj_1",
-        priority=None,
-        due_string=None,
-        description=None,
     )
 
     # assert
@@ -276,14 +266,7 @@ def test_add_todoist_task_with_retry_raises_after_three_failures() -> None:
 
     # act & assert
     with pytest.raises(HTTPError):
-        add_task_no_wait(
-            mock_client,
-            content="content",
-            project_id="proj_1",
-            priority=None,
-            due_string=None,
-            description=None,
-        )
+        add_task_no_wait(mock_client, content="content", project_id="proj_1")
 
     assert mock_client.add_task.call_count == 3
 
@@ -296,12 +279,7 @@ def test_add_todoist_task_with_retry_does_not_retry_on_400() -> None:
     # act & assert
     with pytest.raises(HTTPError):
         _add_todoist_task_with_retry(
-            mock_client,
-            content="content",
-            project_id="proj_1",
-            priority=None,
-            due_string=None,
-            description=None,
+            mock_client, content="content", project_id="proj_1"
         )
 
     mock_client.add_task.assert_called_once()

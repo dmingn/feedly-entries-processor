@@ -29,7 +29,7 @@ Available action types:
 | Name                    | Description                                        | Parameters                                                |
 | ----------------------- | -------------------------------------------------- | --------------------------------------------------------- |
 | `log`                   | Logs entry details                                 | `level`: `info`, `debug`, `warning`, or `error`           |
-| `add_todoist_task`      | Adds entry as a task in Todoist                    | `project_id` (required), `due_string`, `priority` (1–4) |
+| `add_todoist_task`      | Adds entry as a task in Todoist                    | `project_id` (required), `due_string`, `priority` (1–4), `labels` (list of label names) |
 | `remove_from_feedly_tag` | Removes entry from a Feedly tag (e.g. saved). **There is no undo.** | `tag` (required) |
 | `run_in_sequence`       | Runs multiple actions in sequence; stops on first failure | `actions`: list of action objects                        |
 
