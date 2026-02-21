@@ -11,7 +11,7 @@ from pytest_mock import MockerFixture
 from feedly_entries_processor.actions.add_todoist_task_action import (
     AddTodoistTaskAction,
 )
-from feedly_entries_processor.feedly_client import Entry, Origin, Summary
+from feedly_entries_processor.feedly_client import Alternate, Entry, Origin, Summary
 from feedly_entries_processor.settings import TodoistSettings
 
 
@@ -54,12 +54,14 @@ def entry_builder() -> Callable[..., Entry]:
     def _builder(
         title: str = "Test Entry",
         canonical_url: str | None = "http://example.com/test",
+        alternate: list[Alternate] | None = None,
         summary_content: str | None = "Test Summary Content",
     ) -> Entry:
         return Entry(
             id="test_id",
             title=title,
             canonical_url=canonical_url,
+            alternate=alternate,
             origin=Origin(
                 title="Test Origin",
                 html_url="http://example.com",
@@ -153,22 +155,58 @@ def test_AddTodoistTaskAction_process_raises_ValueError_when_todoist_api_token_i
         action.process(entry)
 
 
-def test_AddTodoistTaskAction_process_raises_ValueError_for_entry_without_canonical_url(
+def test_AddTodoistTaskAction_process_raises_ValueError_for_entry_without_url(
     add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
     entry_builder: Callable[..., Entry],
 ) -> None:
-    # arrange
+    # arrange: no canonical_url and no alternate
     entry = entry_builder(
-        canonical_url=None, title="Test Entry No URL", summary_content=None
+        canonical_url=None,
+        alternate=None,
+        title="Test Entry No URL",
+        summary_content=None,
     )
     action = add_todoist_task_action_factory()
 
     # act & assert
     with pytest.raises(
         ValueError,
-        match=r"Entry must have a canonical_url to be processed by AddTodoistTaskAction\.",
+        match=r"Entry must have a URL \(canonical_url or alternate\) to be processed by AddTodoistTaskAction\.",
     ):
         action.process(entry)
+
+
+def test_AddTodoistTaskAction_process_uses_alternate_when_canonical_url_is_None(
+    mock_todoist_api: MagicMock,
+    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
+    entry_builder: Callable[..., Entry],
+) -> None:
+    # arrange: canonical_url is None but alternate has text/html link
+    entry = entry_builder(
+        title="Entry with alternate only",
+        canonical_url=None,
+        alternate=[
+            Alternate(href="http://example.com/alternate-page", type="text/html"),
+        ],
+        summary_content=None,
+    )
+    action = add_todoist_task_action_factory()
+    mock_instance = mock_todoist_api.return_value
+    mock_instance.add_task.return_value.id = "task_1"
+    mock_instance.add_task.return_value.content = "Task"
+
+    # act
+    action.process(entry)
+
+    # assert
+    mock_instance.add_task.assert_called_once_with(
+        content="Entry with alternate only - http://example.com/alternate-page",
+        project_id=action.project_id,
+        description=None,
+        priority=None,
+        due_string=None,
+        labels=None,
+    )
 
 
 def test_AddTodoistTaskAction_process_raises_error_when_add_task_fails(

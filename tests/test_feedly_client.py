@@ -81,6 +81,7 @@ def test_FeedlyClient_fetch_entries_returns_entries_for_single_page(
             published=1678886400000,
             summary=Summary(content="Summary 1"),
             canonical_url="http://example.com/canonical/1",
+            alternate=None,
             origin=Origin(
                 html_url="http://example.com/1",
                 stream_id="stream1",
@@ -94,6 +95,7 @@ def test_FeedlyClient_fetch_entries_returns_entries_for_single_page(
             published=1678886401000,
             summary=Summary(content="Summary 2"),
             canonical_url="http://example.com/canonical/2",
+            alternate=None,
             origin=Origin(
                 html_url="http://example.com/2",
                 stream_id="stream2",
