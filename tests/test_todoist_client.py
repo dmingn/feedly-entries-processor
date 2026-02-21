@@ -8,10 +8,23 @@ from requests.exceptions import HTTPError
 from tenacity import wait_fixed
 
 from feedly_entries_processor.exceptions import TodoistApiError
-from feedly_entries_processor.todoist_client import (
-    _add_task_with_retry_impl,
-    add_task_with_retry,
-)
+from feedly_entries_processor.todoist_client import add_task_with_retry
+
+
+@pytest.fixture(autouse=True)
+def patch_retry_no_wait(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Patch retry to use wait=0 so tests do not sleep."""
+    from feedly_entries_processor.todoist_client import (  # noqa: PLC0415
+        _add_task_with_retry_impl,
+    )
+
+    no_wait_impl = _add_task_with_retry_impl.retry_with(  # type: ignore[attr-defined]
+        wait=wait_fixed(0),
+    )
+    monkeypatch.setattr(
+        "feedly_entries_processor.todoist_client._add_task_with_retry_impl",
+        no_wait_impl,
+    )
 
 
 def _make_http_error(status_code: int) -> HTTPError:
@@ -58,18 +71,15 @@ def test_add_task_with_retry_returns_task_on_success() -> None:
 def test_add_task_with_retry_retries_on_retryable_error_then_succeeds(
     retryable_exception: Exception,
 ) -> None:
-    # arrange: retry_with(wait=0) so tests do not sleep
+    # arrange
     mock_client = MagicMock()
     task = MagicMock()
     task.id = "task_retry"
     task.content = "content"
     mock_client.add_task.side_effect = [retryable_exception, task]
-    add_task_no_wait = _add_task_with_retry_impl.retry_with(  # type: ignore[attr-defined]
-        wait=wait_fixed(0),
-    )
 
     # act
-    result = add_task_no_wait(
+    result = add_task_with_retry(
         mock_client,
         content="content",
         project_id="proj_1",
@@ -80,18 +90,17 @@ def test_add_task_with_retry_retries_on_retryable_error_then_succeeds(
     assert mock_client.add_task.call_count == 2
 
 
-def test_add_task_with_retry_raises_after_three_failures() -> None:
-    # arrange: retry_with(wait=0) so tests do not sleep
+def test_add_task_with_retry_raises_TodoistApiError_after_three_failures() -> None:
+    # arrange
     mock_client = MagicMock()
     mock_client.add_task.side_effect = _make_http_error(503)
-    add_task_no_wait = _add_task_with_retry_impl.retry_with(  # type: ignore[attr-defined]
-        wait=wait_fixed(0),
-    )
 
     # act & assert
-    with pytest.raises(HTTPError):
-        add_task_no_wait(mock_client, content="content", project_id="proj_1")
+    with pytest.raises(TodoistApiError) as exc_info:
+        add_task_with_retry(mock_client, content="content", project_id="proj_1")
 
+    assert "Todoist API request failed" in exc_info.value.args[0]
+    assert exc_info.value.details["status_code"] == 503
     assert mock_client.add_task.call_count == 3
 
 
