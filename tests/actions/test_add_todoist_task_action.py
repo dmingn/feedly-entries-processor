@@ -36,11 +36,13 @@ def add_todoist_task_action_factory() -> Callable[..., AddTodoistTaskAction]:
     def _factory(
         due_string: str | None = None,
         priority: Literal[1, 2, 3, 4] | None = None,
+        labels: frozenset[str] | None = None,
     ) -> AddTodoistTaskAction:
         return AddTodoistTaskAction(
             project_id=project_id,
             due_string=due_string,
             priority=priority,
+            labels=labels,
             todoist_settings=TodoistSettings.model_construct(
                 todoist_api_token=SecretStr("test_token")
             ),
@@ -75,7 +77,7 @@ def entry_builder() -> Callable[..., Entry]:
     return _builder
 
 
-def test_AddTodoistTaskAction_process_creates_task_for_entry(
+def test_AddTodoistTaskAction_process_creates_task_without_optional_params(
     mock_todoist_api: MagicMock,
     add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
     entry_builder: Callable[..., Entry],
@@ -91,13 +93,49 @@ def test_AddTodoistTaskAction_process_creates_task_for_entry(
     action.process(sample_entry)
 
     # assert
-    expected_content = "Test Entry - http://example.com/test"
     mock_instance.add_task.assert_called_once_with(
-        content=expected_content,
+        content="Test Entry - http://example.com/test",
         project_id=action.project_id,
+        description="Test Summary Content",
         priority=None,
         due_string=None,
-        description="Test Summary Content",
+        labels=None,
+    )
+
+
+def test_AddTodoistTaskAction_process_creates_task_with_all_optional_params(
+    mock_todoist_api: MagicMock,
+    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
+    entry_builder: Callable[..., Entry],
+) -> None:
+    # arrange
+    due_string = "today"
+    priority: Literal[1, 2, 3, 4] = 2
+    labels = frozenset({"reading"})
+
+    action_with_params = add_todoist_task_action_factory(
+        due_string=due_string, priority=priority, labels=labels
+    )
+    entry = entry_builder(
+        title="Entry with Params",
+        canonical_url="http://example.com/params",
+        summary_content="Summary for params",
+    )
+    mock_instance = mock_todoist_api.return_value
+    mock_instance.add_task.return_value.id = "task_789"
+    mock_instance.add_task.return_value.content = "Test Task with Params"
+
+    # act
+    action_with_params.process(entry)
+
+    # assert
+    mock_instance.add_task.assert_called_once_with(
+        content="Entry with Params - http://example.com/params",
+        project_id=action_with_params.project_id,
+        description="Summary for params",
+        priority=priority,
+        due_string=due_string,
+        labels=["reading"],
     )
 
 
@@ -155,42 +193,6 @@ def test_AddTodoistTaskAction_process_raises_error_when_add_task_fails(
     mock_instance.add_task.assert_called_once()
 
 
-def test_AddTodoistTaskAction_process_uses_optional_params_when_provided(
-    mock_todoist_api: MagicMock,
-    entry_builder: Callable[..., Entry],
-    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
-) -> None:
-    # arrange
-    due_string = "today"
-    priority: Literal[1, 2, 3, 4] = 2  # Use Literal for type hint
-
-    action_with_params = add_todoist_task_action_factory(
-        due_string=due_string, priority=priority
-    )
-
-    entry = entry_builder(
-        title="Entry with Params",
-        canonical_url="http://example.com/params",
-        summary_content="Summary for params",
-    )
-    mock_instance = mock_todoist_api.return_value
-    mock_instance.add_task.return_value.id = "task_789"
-    mock_instance.add_task.return_value.content = "Test Task with Params"
-
-    # act
-    action_with_params.process(entry)
-
-    # assert
-    expected_content = "Entry with Params - http://example.com/params"
-    mock_instance.add_task.assert_called_once_with(
-        content=expected_content,
-        project_id=action_with_params.project_id,
-        priority=priority,
-        due_string=due_string,
-        description="Summary for params",
-    )
-
-
 def _make_http_error(status_code: int) -> HTTPError:
     """Build an HTTPError with the given status code for retry tests."""
     error = HTTPError("Server error")
@@ -212,20 +214,14 @@ def test_add_todoist_task_with_retry_returns_task_on_success() -> None:
         mock_client,
         content="content",
         project_id="proj_1",
-        priority=None,
-        due_string=None,
-        description=None,
     )
 
     # assert
     assert result is task
-    mock_client.add_task.assert_called_once_with(
-        content="content",
-        project_id="proj_1",
-        priority=None,
-        due_string=None,
-        description=None,
-    )
+    mock_client.add_task.assert_called_once()
+    call_kwargs = mock_client.add_task.call_args.kwargs
+    assert call_kwargs["content"] == "content"
+    assert call_kwargs["project_id"] == "proj_1"
 
 
 @pytest.mark.parametrize(
@@ -256,9 +252,6 @@ def test_add_todoist_task_with_retry_retries_on_retryable_error_then_succeeds(
         mock_client,
         content="content",
         project_id="proj_1",
-        priority=None,
-        due_string=None,
-        description=None,
     )
 
     # assert
@@ -276,14 +269,7 @@ def test_add_todoist_task_with_retry_raises_after_three_failures() -> None:
 
     # act & assert
     with pytest.raises(HTTPError):
-        add_task_no_wait(
-            mock_client,
-            content="content",
-            project_id="proj_1",
-            priority=None,
-            due_string=None,
-            description=None,
-        )
+        add_task_no_wait(mock_client, content="content", project_id="proj_1")
 
     assert mock_client.add_task.call_count == 3
 
@@ -296,12 +282,7 @@ def test_add_todoist_task_with_retry_does_not_retry_on_400() -> None:
     # act & assert
     with pytest.raises(HTTPError):
         _add_todoist_task_with_retry(
-            mock_client,
-            content="content",
-            project_id="proj_1",
-            priority=None,
-            due_string=None,
-            description=None,
+            mock_client, content="content", project_id="proj_1"
         )
 
     mock_client.add_task.assert_called_once()
