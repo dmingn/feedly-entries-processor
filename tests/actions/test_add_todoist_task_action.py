@@ -15,6 +15,7 @@ from feedly_entries_processor.actions.add_todoist_task_action import (
     AddTodoistTaskAction,
     _add_todoist_task_with_retry,
 )
+from feedly_entries_processor.exceptions import TodoistApiError
 from feedly_entries_processor.feedly_client import Entry, Origin, Summary
 from feedly_entries_processor.settings import TodoistSettings
 
@@ -75,6 +76,14 @@ def entry_builder() -> Callable[..., Entry]:
         )
 
     return _builder
+
+
+def _make_http_error(status_code: int) -> HTTPError:
+    """Build an HTTPError with the given status code for retry tests."""
+    error = HTTPError("Server error")
+    error.response = MagicMock()
+    error.response.status_code = status_code
+    return error
 
 
 def test_AddTodoistTaskAction_process_creates_task_without_optional_params(
@@ -193,12 +202,33 @@ def test_AddTodoistTaskAction_process_raises_error_when_add_task_fails(
     mock_instance.add_task.assert_called_once()
 
 
-def _make_http_error(status_code: int) -> HTTPError:
-    """Build an HTTPError with the given status code for retry tests."""
-    error = HTTPError("Server error")
-    error.response = MagicMock()
-    error.response.status_code = status_code
-    return error
+@pytest.mark.parametrize(
+    "request_exception",
+    [
+        _make_http_error(400),
+        RequestsConnectionError("Connection failed"),
+    ],
+)
+def test_AddTodoistTaskAction_process_raises_TodoistApiError_on_RequestException(
+    mock_todoist_api: MagicMock,
+    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
+    entry_builder: Callable[..., Entry],
+    request_exception: Exception,
+) -> None:
+    # arrange
+    sample_entry = entry_builder()
+    action = add_todoist_task_action_factory()
+    mock_instance = mock_todoist_api.return_value
+    mock_instance.add_task.side_effect = request_exception
+
+    # act & assert
+    with pytest.raises(TodoistApiError) as exc_info:
+        action.process(sample_entry)
+
+    assert "Todoist API request failed" in exc_info.value.args[0]
+    assert exc_info.value.details["project_id"] == action.project_id
+    # HTTPError (e.g. 400) is not retried; ConnectionError is retried 3 times
+    assert mock_instance.add_task.call_count >= 1
 
 
 def test_add_todoist_task_with_retry_returns_task_on_success() -> None:

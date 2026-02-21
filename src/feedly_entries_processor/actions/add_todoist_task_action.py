@@ -116,8 +116,9 @@ class AddTodoistTaskAction(BaseAction):
                 description=entry.summary.content if entry.summary else None,
                 labels=self.labels,
             )
-        except HTTPError as exc:
-            details = _todoist_error_details(exc.response, self.project_id)
+        except RequestException as exc:
+            response = getattr(exc, "response", None)
+            details = _todoist_error_details(response, self.project_id)
             message = f"Todoist API request failed with status {details['status_code']}"
             raise TodoistApiError(message, details=details) from exc
 
