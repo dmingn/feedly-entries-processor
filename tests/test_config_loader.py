@@ -46,6 +46,7 @@ _ACTIONS = (
         project_id="project_id",
         due_string="today",
         priority=1,
+        labels=frozenset({"reading", "tech"}),
         todoist_settings=TodoistSettings.model_construct(
             todoist_api_token=SecretStr(_TODOIST_TEST_TOKEN)
         ),

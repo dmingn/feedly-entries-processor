@@ -37,9 +37,10 @@ def _add_todoist_task_with_retry(  # noqa: PLR0913
     *,
     content: str,
     project_id: str,
-    priority: Literal[1, 2, 3, 4] | None,
-    due_string: str | None,
-    description: str | None,
+    priority: Literal[1, 2, 3, 4] | None = None,
+    due_string: str | None = None,
+    description: str | None = None,
+    labels: frozenset[str] | None = None,
 ) -> Task:
     """Call Todoist add_task with retry on transient and rate-limit errors."""
     return client.add_task(
@@ -48,6 +49,7 @@ def _add_todoist_task_with_retry(  # noqa: PLR0913
         priority=priority,
         due_string=due_string,
         description=description,
+        labels=list(labels) if labels else None,
     )
 
 
@@ -58,6 +60,7 @@ class AddTodoistTaskAction(BaseAction):
     project_id: str
     due_string: str | None = None
     priority: Literal[1, 2, 3, 4] | None = None
+    labels: frozenset[str] | None = None
     todoist_settings: TodoistSettings = Field(default_factory=TodoistSettings)
 
     def process(self, entry: Entry) -> None:
@@ -82,6 +85,7 @@ class AddTodoistTaskAction(BaseAction):
             priority=self.priority,
             due_string=self.due_string,
             description=entry.summary.content if entry.summary else None,
+            labels=self.labels,
         )
 
         logger.info(f"Added task to Todoist: {task.content} (ID: {task.id})")
