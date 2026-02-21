@@ -22,17 +22,17 @@ def process_entry(entry: Entry, rule: Rule) -> None:
     try:
         if rule.condition.matches(entry):
             logger.info(
-                f"Entry '{entry.title}' (URL: {entry.canonical_url}) matched rule '{rule.name}'."
+                f"Entry '{entry.title}' (URL: {entry.effective_url}) matched rule '{rule.name}'."
             )
             try:
                 rule.action.process(entry)
             except Exception:  # noqa: BLE001
                 logger.exception(
-                    f"Error processing entry '{entry.title}' (URL: {entry.canonical_url}) with rule '{rule.name}'."
+                    f"Error processing entry '{entry.title}' (URL: {entry.effective_url}) with rule '{rule.name}'."
                 )
     except Exception:  # noqa: BLE001
         logger.exception(
-            f"Error evaluating rule '{rule.name}' for entry '{entry.title}' (URL: {entry.canonical_url})."
+            f"Error evaluating rule '{rule.name}' for entry '{entry.title}' (URL: {entry.effective_url})."
         )
 
 

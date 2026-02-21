@@ -28,14 +28,14 @@ class AddTodoistTaskAction(BaseAction):
             error_message = "TODOIST_API_TOKEN must be set (e.g. via environment or .env) when using add_todoist_task action"
             raise ValueError(error_message)
 
-        if entry.canonical_url is None:
-            error_message = "Entry must have a canonical_url to be processed by AddTodoistTaskAction."
+        if entry.effective_url is None:
+            error_message = "Entry must have a URL (canonical_url or alternate) to be processed by AddTodoistTaskAction."
             raise ValueError(error_message)
 
         api_token = self.todoist_settings.todoist_api_token.get_secret_value()
         client = TodoistAPI(api_token)
 
-        task_content = f"{entry.title} - {entry.canonical_url}"
+        task_content = f"{entry.title} - {entry.effective_url}"
 
         task = add_task_with_retry(
             client,

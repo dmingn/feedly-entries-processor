@@ -6,7 +6,7 @@ from urllib.parse import quote
 
 from feedly.api_client.session import FeedlySession, FileAuthStore
 from logzero import logger
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from pydantic.alias_generators import to_camel
 from requests.exceptions import RequestException
 
@@ -43,12 +43,27 @@ class Origin(BaseModel):
     )
 
 
+class Alternate(BaseModel):
+    """Alternate link (e.g. article URL as shared by the publisher)."""
+
+    href: str
+    type: str | None = Field(default=None, alias="type")
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        frozen=True,
+        validate_by_alias=True,
+        validate_by_name=True,
+        populate_by_name=True,
+    )
+
+
 class Entry(BaseModel):
     """Entry model."""
 
     id: str
     author: str | None = None
     canonical_url: str | None = None
+    alternate: tuple[Alternate, ...] | None = None
     origin: Origin | None = None
     published: int | None = None
     summary: Summary | None = None
@@ -59,6 +74,13 @@ class Entry(BaseModel):
         validate_by_alias=True,
         validate_by_name=True,
     )
+
+    @property
+    def effective_url(self) -> str | None:
+        """Return the best available URL: canonical_url, or first alternate."""
+        return self.canonical_url or (
+            self.alternate[0].href if self.alternate else None
+        )
 
 
 class StreamContents(BaseModel):

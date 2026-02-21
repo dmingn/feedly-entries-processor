@@ -16,7 +16,7 @@ class LogAction(BaseAction):
 
     def process(self, entry: Entry) -> None:
         """Process a Feedly entry by logging its details."""
-        log_message = f"Processing entry: {entry.title} (URL: {entry.canonical_url})"
+        log_message = f"Processing entry: {entry.title} (URL: {entry.effective_url})"
         match self.level:
             case "info":
                 logger.info(log_message)
