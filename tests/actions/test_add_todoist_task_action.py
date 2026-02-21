@@ -77,7 +77,7 @@ def entry_builder() -> Callable[..., Entry]:
     return _builder
 
 
-def test_AddTodoistTaskAction_process_creates_task_for_entry(
+def test_AddTodoistTaskAction_process_creates_task_without_optional_params(
     mock_todoist_api: MagicMock,
     add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
     entry_builder: Callable[..., Entry],
@@ -93,10 +93,51 @@ def test_AddTodoistTaskAction_process_creates_task_for_entry(
     action.process(sample_entry)
 
     # assert
+    mock_instance.add_task.assert_called_once_with(
+        content="Test Entry - http://example.com/test",
+        project_id=action.project_id,
+        description="Test Summary Content",
+        priority=None,
+        due_string=None,
+        labels=None,
+    )
+
+
+def test_AddTodoistTaskAction_process_creates_task_with_all_optional_params(
+    mock_todoist_api: MagicMock,
+    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
+    entry_builder: Callable[..., Entry],
+) -> None:
+    # arrange
+    due_string = "today"
+    priority: Literal[1, 2, 3, 4] = 2
+    labels = frozenset({"reading", "tech"})
+
+    action_with_params = add_todoist_task_action_factory(
+        due_string=due_string, priority=priority, labels=labels
+    )
+    entry = entry_builder(
+        title="Entry with Params",
+        canonical_url="http://example.com/params",
+        summary_content="Summary for params",
+    )
+    mock_instance = mock_todoist_api.return_value
+    mock_instance.add_task.return_value.id = "task_789"
+    mock_instance.add_task.return_value.content = "Test Task with Params"
+
+    # act
+    action_with_params.process(entry)
+
+    # assert: labels need set equality (list order from frozenset is undefined)
     mock_instance.add_task.assert_called_once()
+    expected_content = "Entry with Params - http://example.com/params"
     call_kwargs = mock_instance.add_task.call_args.kwargs
-    assert call_kwargs["content"] == "Test Entry - http://example.com/test"
-    assert call_kwargs["project_id"] == action.project_id
+    assert call_kwargs["content"] == expected_content
+    assert call_kwargs["project_id"] == action_with_params.project_id
+    assert call_kwargs["priority"] == priority
+    assert call_kwargs["due_string"] == due_string
+    assert call_kwargs["description"] == "Summary for params"
+    assert set(call_kwargs["labels"]) == {"reading", "tech"}
 
 
 def test_AddTodoistTaskAction_process_raises_ValueError_when_todoist_api_token_is_not_set(
@@ -151,43 +192,6 @@ def test_AddTodoistTaskAction_process_raises_error_when_add_task_fails(
         action.process(sample_entry)
 
     mock_instance.add_task.assert_called_once()
-
-
-def test_AddTodoistTaskAction_process_uses_optional_params_when_provided(
-    mock_todoist_api: MagicMock,
-    entry_builder: Callable[..., Entry],
-    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
-) -> None:
-    # arrange
-    due_string = "today"
-    priority: Literal[1, 2, 3, 4] = 2  # Use Literal for type hint
-    labels = frozenset({"reading", "tech"})
-
-    action_with_params = add_todoist_task_action_factory(
-        due_string=due_string, priority=priority, labels=labels
-    )
-    entry = entry_builder(
-        title="Entry with Params",
-        canonical_url="http://example.com/params",
-        summary_content="Summary for params",
-    )
-    mock_instance = mock_todoist_api.return_value
-    mock_instance.add_task.return_value.id = "task_789"
-    mock_instance.add_task.return_value.content = "Test Task with Params"
-
-    # act
-    action_with_params.process(entry)
-
-    # assert: use call_args for flexible checks; labels need set equality (list order undefined)
-    mock_instance.add_task.assert_called_once()
-    expected_content = "Entry with Params - http://example.com/params"
-    call_kwargs = mock_instance.add_task.call_args.kwargs
-    assert call_kwargs["content"] == expected_content
-    assert call_kwargs["project_id"] == action_with_params.project_id
-    assert call_kwargs["priority"] == priority
-    assert call_kwargs["due_string"] == due_string
-    assert call_kwargs["description"] == "Summary for params"
-    assert set(call_kwargs["labels"]) == {"reading", "tech"}
 
 
 def _make_http_error(status_code: int) -> HTTPError:
