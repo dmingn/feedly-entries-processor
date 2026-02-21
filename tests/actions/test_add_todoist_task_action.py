@@ -8,7 +8,6 @@ import pytest
 from pydantic import SecretStr
 from pytest_mock import MockerFixture
 from requests.exceptions import ConnectionError as RequestsConnectionError
-from requests.exceptions import HTTPError
 
 from feedly_entries_processor.actions.add_todoist_task_action import (
     AddTodoistTaskAction,
@@ -16,6 +15,7 @@ from feedly_entries_processor.actions.add_todoist_task_action import (
 from feedly_entries_processor.exceptions import TodoistApiError
 from feedly_entries_processor.feedly_client import Entry, Origin, Summary
 from feedly_entries_processor.settings import TodoistSettings
+from tests.helpers import make_http_error
 
 
 @pytest.fixture
@@ -74,14 +74,6 @@ def entry_builder() -> Callable[..., Entry]:
         )
 
     return _builder
-
-
-def _make_http_error(status_code: int) -> HTTPError:
-    """Build an HTTPError with the given status code for retry tests."""
-    error = HTTPError("Server error")
-    error.response = MagicMock()
-    error.response.status_code = status_code
-    return error
 
 
 def test_AddTodoistTaskAction_process_creates_task_without_optional_params(
@@ -203,7 +195,7 @@ def test_AddTodoistTaskAction_process_raises_error_when_add_task_fails(
 @pytest.mark.parametrize(
     "request_exception",
     [
-        _make_http_error(400),
+        make_http_error(400),
         RequestsConnectionError("Connection failed"),
     ],
 )
