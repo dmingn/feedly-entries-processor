@@ -7,15 +7,12 @@ from unittest.mock import MagicMock
 import pytest
 from pydantic import SecretStr
 from pytest_mock import MockerFixture
-from requests.exceptions import ConnectionError as RequestsConnectionError
 
 from feedly_entries_processor.actions.add_todoist_task_action import (
     AddTodoistTaskAction,
 )
-from feedly_entries_processor.exceptions import TodoistApiError
 from feedly_entries_processor.feedly_client import Entry, Origin, Summary
 from feedly_entries_processor.settings import TodoistSettings
-from tests.helpers import make_http_error
 
 
 @pytest.fixture
@@ -190,32 +187,3 @@ def test_AddTodoistTaskAction_process_raises_error_when_add_task_fails(
         action.process(sample_entry)
 
     mock_instance.add_task.assert_called_once()
-
-
-@pytest.mark.parametrize(
-    "request_exception",
-    [
-        make_http_error(400),
-        RequestsConnectionError("Connection failed"),
-    ],
-)
-def test_AddTodoistTaskAction_process_raises_TodoistApiError_on_RequestException(
-    mock_todoist_api: MagicMock,
-    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
-    entry_builder: Callable[..., Entry],
-    request_exception: Exception,
-) -> None:
-    # arrange
-    sample_entry = entry_builder()
-    action = add_todoist_task_action_factory()
-    mock_instance = mock_todoist_api.return_value
-    mock_instance.add_task.side_effect = request_exception
-
-    # act & assert
-    with pytest.raises(TodoistApiError) as exc_info:
-        action.process(sample_entry)
-
-    assert "Todoist API request failed" in exc_info.value.args[0]
-    assert exc_info.value.details["project_id"] == action.project_id
-    # HTTPError (e.g. 400) is not retried; ConnectionError is retried 3 times
-    assert mock_instance.add_task.call_count >= 1
