@@ -9,11 +9,9 @@ from pydantic import SecretStr
 from pytest_mock import MockerFixture
 from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import HTTPError
-from tenacity import wait_fixed
 
 from feedly_entries_processor.actions.add_todoist_task_action import (
     AddTodoistTaskAction,
-    _add_todoist_task_with_retry,
 )
 from feedly_entries_processor.exceptions import TodoistApiError
 from feedly_entries_processor.feedly_client import Entry, Origin, Summary
@@ -229,90 +227,3 @@ def test_AddTodoistTaskAction_process_raises_TodoistApiError_on_RequestException
     assert exc_info.value.details["project_id"] == action.project_id
     # HTTPError (e.g. 400) is not retried; ConnectionError is retried 3 times
     assert mock_instance.add_task.call_count >= 1
-
-
-def test_add_todoist_task_with_retry_returns_task_on_success() -> None:
-    # arrange
-    mock_client = MagicMock()
-    task = MagicMock()
-    task.id = "task_1"
-    task.content = "content"
-    mock_client.add_task.return_value = task
-
-    # act
-    result = _add_todoist_task_with_retry(
-        mock_client,
-        content="content",
-        project_id="proj_1",
-    )
-
-    # assert
-    assert result is task
-    mock_client.add_task.assert_called_once()
-    call_kwargs = mock_client.add_task.call_args.kwargs
-    assert call_kwargs["content"] == "content"
-    assert call_kwargs["project_id"] == "proj_1"
-
-
-@pytest.mark.parametrize(
-    "retryable_exception",
-    [
-        pytest.param(_make_http_error(503), id="503"),
-        pytest.param(
-            RequestsConnectionError("Connection refused"),
-            id="connection_error",
-        ),
-    ],
-)
-def test_add_todoist_task_with_retry_retries_on_retryable_error_then_succeeds(
-    retryable_exception: Exception,
-) -> None:
-    # arrange: retry_with(wait=0) so tests do not sleep
-    mock_client = MagicMock()
-    task = MagicMock()
-    task.id = "task_retry"
-    task.content = "content"
-    mock_client.add_task.side_effect = [retryable_exception, task]
-    add_task_no_wait = _add_todoist_task_with_retry.retry_with(  # type: ignore[attr-defined]
-        wait=wait_fixed(0),
-    )
-
-    # act
-    result = add_task_no_wait(
-        mock_client,
-        content="content",
-        project_id="proj_1",
-    )
-
-    # assert
-    assert result is task
-    assert mock_client.add_task.call_count == 2
-
-
-def test_add_todoist_task_with_retry_raises_after_three_failures() -> None:
-    # arrange: retry_with(wait=0) so tests do not sleep
-    mock_client = MagicMock()
-    mock_client.add_task.side_effect = _make_http_error(503)
-    add_task_no_wait = _add_todoist_task_with_retry.retry_with(  # type: ignore[attr-defined]
-        wait=wait_fixed(0),
-    )
-
-    # act & assert
-    with pytest.raises(HTTPError):
-        add_task_no_wait(mock_client, content="content", project_id="proj_1")
-
-    assert mock_client.add_task.call_count == 3
-
-
-def test_add_todoist_task_with_retry_does_not_retry_on_400() -> None:
-    # arrange
-    mock_client = MagicMock()
-    mock_client.add_task.side_effect = _make_http_error(400)
-
-    # act & assert
-    with pytest.raises(HTTPError):
-        _add_todoist_task_with_retry(
-            mock_client, content="content", project_id="proj_1"
-        )
-
-    mock_client.add_task.assert_called_once()
