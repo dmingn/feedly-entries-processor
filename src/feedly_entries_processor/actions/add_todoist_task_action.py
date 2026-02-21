@@ -1,6 +1,6 @@
 """Add Todoist task action."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from logzero import logger
 from pydantic import Field
@@ -18,7 +18,7 @@ from feedly_entries_processor.settings import TodoistSettings
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
-def _response_error_body(response: Response) -> object:
+def _response_error_body(response: Response) -> Any:  # noqa: ANN401
     """Parse JSON body or fall back to raw text."""
     try:
         return response.json()
@@ -29,7 +29,7 @@ def _response_error_body(response: Response) -> object:
 def _todoist_error_details(
     response: Response | None,
     project_id: str,
-) -> dict[str, object]:
+) -> dict[str, Any]:
     """Build a details dict from an HTTPError's response (or None)."""
     if response is None:
         return {
