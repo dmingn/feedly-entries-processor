@@ -18,6 +18,7 @@ Available condition types:
 | Name                | Description                         | Parameters                    |
 | ------------------- | ----------------------------------- | ----------------------------- |
 | `match_all`         | Matches all entries                 | None                          |
+| `regex_partial_match` | Matches when any of the given entry fields (title, author, summary_contents) contains text matching any of the patterns | `fields`: list of `"title"`, `"author"`, `"summary_contents"`; `patterns`: list of regex strings |
 | `stream_id_in_list` | Matches entries in given stream IDs | `stream_ids`: list of strings |
 
 ### Actions

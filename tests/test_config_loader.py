@@ -14,6 +14,7 @@ from feedly_entries_processor.actions import (
 )
 from feedly_entries_processor.conditions import (
     MatchAllCondition,
+    RegexPartialMatchCondition,
     StreamIdInListCondition,
 )
 from feedly_entries_processor.config_loader import (
@@ -39,6 +40,7 @@ _SOURCES = (AllSource(), SavedSource())
 _CONDITIONS = (
     MatchAllCondition(),
     StreamIdInListCondition(stream_ids=frozenset({"stream_id"})),
+    RegexPartialMatchCondition(fields=("title",), patterns=("pattern",)),
 )
 _ACTIONS = (
     LogAction(),
