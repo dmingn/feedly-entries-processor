@@ -50,14 +50,9 @@ class RegexPartialMatchCondition(BaseCondition):
 
     def matches(self, entry: Entry) -> bool:
         """Return True if any of the entry's specified fields match any of the patterns."""
-        for field_name in self.fields:
-            value = self._get_field_value(entry, field_name)
-
-            if value is None:
-                continue
-
-            for pattern in self._compiled_patterns:
-                if pattern.search(value):
-                    return True
-
-        return False
+        return any(
+            pattern.search(value)
+            for field_name in self.fields
+            if (value := self._get_field_value(entry, field_name)) is not None
+            for pattern in self._compiled_patterns
+        )
