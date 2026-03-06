@@ -124,8 +124,8 @@ def test_RegexPartialMatchCondition_can_be_instantiated() -> None:
     # assert
     assert isinstance(condition, RegexPartialMatchCondition)
     assert condition.name == "regex_partial_match"
-    assert condition.fields == ["title", "summary_contents"]
-    assert condition.patterns == ["p1", "p2"]
+    assert condition.fields == ("title", "summary_contents")
+    assert condition.patterns == ("p1", "p2")
 
 
 @pytest.mark.parametrize(

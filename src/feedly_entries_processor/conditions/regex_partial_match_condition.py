@@ -13,8 +13,10 @@ class RegexPartialMatchCondition(BaseCondition):
     """Condition that matches when any of the patterns are found in any of the specified fields."""
 
     name: Literal["regex_partial_match"] = "regex_partial_match"
-    fields: list[Literal["title", "author", "summary_contents"]] = Field(min_length=1)
-    patterns: list[str] = Field(min_length=1)
+    fields: tuple[Literal["title", "author", "summary_contents"], ...] = Field(
+        min_length=1
+    )
+    patterns: tuple[str, ...] = Field(min_length=1)
 
     def matches(self, entry: Entry) -> bool:
         """Return True if any of the entry's specified fields match any of the patterns."""
