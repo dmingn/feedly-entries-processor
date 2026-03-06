@@ -153,6 +153,14 @@ def test_RegexPartialMatchCondition_can_be_instantiated() -> None:
             },
             id="invalid_field_name",
         ),
+        pytest.param(
+            {
+                "name": "regex_partial_match",
+                "fields": ["title"],
+                "patterns": ["["],
+            },
+            id="invalid_regex_pattern",
+        ),
     ],
 )
 def test_RegexPartialMatchCondition_raises_ValidationError_for_invalid_config(
