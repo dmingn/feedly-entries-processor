@@ -110,7 +110,7 @@ def test_FeedlyClient_fetch_entries_returns_entries_for_single_page(
         params={
             "streamId": stream_id,
             "count": "1000",
-            "ranked": "oldest",
+            "ranked": "newest",
         },
     )
 
@@ -150,7 +150,7 @@ def test_FeedlyClient_fetch_entries_returns_all_entries_for_multiple_pages(
         params={
             "streamId": stream_id,
             "count": "1000",
-            "ranked": "oldest",
+            "ranked": "newest",
         },
     )
     mock_feedly_session.do_api_request.assert_any_call(
@@ -158,7 +158,7 @@ def test_FeedlyClient_fetch_entries_returns_all_entries_for_multiple_pages(
         params={
             "streamId": stream_id,
             "count": "1000",
-            "ranked": "oldest",
+            "ranked": "newest",
             "continuation": "continuation1",
         },
     )

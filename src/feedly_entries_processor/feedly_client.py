@@ -136,7 +136,7 @@ class FeedlyClient:
                             {
                                 "streamId": stream_id,
                                 "count": "1000",
-                                "ranked": "oldest",
+                                "ranked": "newest",
                             }
                             | ({"continuation": continuation} if continuation else {})
                         ),
