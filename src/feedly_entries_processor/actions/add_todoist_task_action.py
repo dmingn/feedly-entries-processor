@@ -7,6 +7,7 @@ from pydantic import Field
 from todoist_api_python.api import TodoistAPI
 
 from feedly_entries_processor.actions.base_action import BaseAction
+from feedly_entries_processor.exceptions import TodoistApiError
 from feedly_entries_processor.feedly_client import Entry
 from feedly_entries_processor.settings import TodoistSettings
 from feedly_entries_processor.todoist_client import add_task_with_retry
@@ -22,7 +23,7 @@ class AddTodoistTaskAction(BaseAction):
     labels: frozenset[str] | None = None
     todoist_settings: TodoistSettings = Field(default_factory=TodoistSettings)
 
-    def process(self, entry: Entry) -> None:
+    def _process(self, entry: Entry) -> None:
         """Process a Feedly entry by adding it as a task to Todoist."""
         if self.todoist_settings.todoist_api_token is None:
             error_message = "TODOIST_API_TOKEN must be set (e.g. via environment or .env) when using add_todoist_task action"
@@ -37,14 +38,19 @@ class AddTodoistTaskAction(BaseAction):
 
         task_content = f"{entry.title} - {entry.effective_url}"
 
-        task = add_task_with_retry(
-            client,
-            content=task_content,
-            project_id=self.project_id,
-            priority=self.priority,
-            due_string=self.due_string,
-            description=entry.summary.content if entry.summary else None,
-            labels=self.labels,
-        )
+        try:
+            task = add_task_with_retry(
+                client,
+                content=task_content,
+                project_id=self.project_id,
+                priority=self.priority,
+                due_string=self.due_string,
+                description=entry.summary.content if entry.summary else None,
+                labels=self.labels,
+            )
+        except TodoistApiError as exc:
+            if (exc.details or {}).get("status_code") in {401, 403}:
+                self._persistent_error = exc
+            raise
 
         logger.info(f"Added task to Todoist: {task.content} (ID: {task.id})")
