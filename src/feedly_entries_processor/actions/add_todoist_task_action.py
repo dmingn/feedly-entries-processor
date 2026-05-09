@@ -49,7 +49,7 @@ class AddTodoistTaskAction(BaseAction):
                 labels=self.labels,
             )
         except TodoistApiError as exc:
-            if (exc.details or {}).get("status_code") in {401, 403}:
+            if exc.details.get("status_code") in {401, 403}:
                 self._persistent_error = exc
             raise
 
