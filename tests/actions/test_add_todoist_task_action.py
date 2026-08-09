@@ -7,9 +7,15 @@ from unittest.mock import MagicMock
 import pytest
 from pydantic import SecretStr
 from pytest_mock import MockerFixture
+from requests import Response
+from requests.exceptions import HTTPError
 
 from feedly_entries_processor.actions.add_todoist_task_action import (
     AddTodoistTaskAction,
+)
+from feedly_entries_processor.exceptions import (
+    ActionSkippedDueToPersistentError,
+    TodoistApiError,
 )
 from feedly_entries_processor.feedly_client import Alternate, Entry, Origin, Summary
 from feedly_entries_processor.settings import TodoistSettings
@@ -225,3 +231,59 @@ def test_AddTodoistTaskAction_process_raises_error_when_add_task_fails(
         action.process(sample_entry)
 
     mock_instance.add_task.assert_called_once()
+
+
+def test_AddTodoistTaskAction_process_sets_persistent_error_and_skips_subsequent_calls_on_403(
+    mock_todoist_api: MagicMock,
+    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
+    entry_builder: Callable[..., Entry],
+) -> None:
+    # arrange
+    sample_entry = entry_builder()
+    action = add_todoist_task_action_factory()
+    mock_instance = mock_todoist_api.return_value
+
+    response = Response()
+    response.status_code = 403
+    mock_instance.add_task.side_effect = HTTPError(response=response)
+
+    # act & assert (first call)
+    with pytest.raises(TodoistApiError) as exc_info:
+        action.process(sample_entry)
+    assert exc_info.value.details["status_code"] == 403
+
+    # act & assert (second call)
+    with pytest.raises(ActionSkippedDueToPersistentError) as exc_info_skip:
+        action.process(sample_entry)
+
+    assert "persistent error occurred previously" in str(exc_info_skip.value)
+    assert mock_instance.add_task.call_count == 1
+
+
+def test_AddTodoistTaskAction_process_does_not_set_persistent_error_on_500(
+    mock_todoist_api: MagicMock,
+    add_todoist_task_action_factory: Callable[..., AddTodoistTaskAction],
+    entry_builder: Callable[..., Entry],
+) -> None:
+    # arrange
+    sample_entry = entry_builder()
+    action = add_todoist_task_action_factory()
+    mock_instance = mock_todoist_api.return_value
+
+    response = Response()
+    response.status_code = 500
+    mock_instance.add_task.side_effect = HTTPError(response=response)
+
+    # act & assert (first call)
+    # Note: add_task_with_retry will retry 3 times
+    with pytest.raises(TodoistApiError) as exc_info:
+        action.process(sample_entry)
+    assert exc_info.value.details["status_code"] == 500
+
+    # act & assert (second call)
+    # Should call the API again (3 more retries)
+    with pytest.raises(TodoistApiError) as exc_info_retry:
+        action.process(sample_entry)
+    assert exc_info_retry.value.details["status_code"] == 500
+
+    assert mock_instance.add_task.call_count == 6

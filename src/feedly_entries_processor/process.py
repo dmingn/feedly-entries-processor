@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from logzero import logger
 
 from feedly_entries_processor.config_loader import Rule, load_config
+from feedly_entries_processor.exceptions import ActionSkippedDueToPersistentError
 from feedly_entries_processor.feedly_client import Entry, create_feedly_client
 from feedly_entries_processor.settings import FeedlySettings
 
@@ -26,6 +27,10 @@ def process_entry(entry: Entry, rule: Rule) -> None:
             )
             try:
                 rule.action.process(entry)
+            except ActionSkippedDueToPersistentError as e:
+                logger.error(
+                    f"Rule '{rule.name}' skipped for entry '{entry.title}': {e}"
+                )
             except Exception:  # noqa: BLE001
                 logger.exception(
                     f"Error processing entry '{entry.title}' (URL: {entry.effective_url}) with rule '{rule.name}'."

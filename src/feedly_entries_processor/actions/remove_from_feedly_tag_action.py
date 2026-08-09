@@ -28,7 +28,7 @@ class RemoveFromFeedlyTagAction(BaseAction):
         """Initialize and cache the Feedly API client."""
         return create_feedly_client(self.feedly_settings.token_dir)
 
-    def process(self, entry: Entry) -> None:
+    def _process(self, entry: Entry) -> None:
         """Process a Feedly entry by removing it from the configured tag."""
         self._feedly_client.remove_entry_from_tag(self.tag, entry.id)
         logger.info(
