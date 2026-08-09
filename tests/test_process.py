@@ -9,6 +9,7 @@ from pytest_mock import MockerFixture
 from feedly_entries_processor.actions import LogAction
 from feedly_entries_processor.conditions import MatchAllCondition
 from feedly_entries_processor.config_loader import Rule
+from feedly_entries_processor.exceptions import ActionSkippedDueToPersistentError
 from feedly_entries_processor.feedly_client import Entry
 from feedly_entries_processor.process import process_entries, process_entry
 from feedly_entries_processor.sources import SavedSource
@@ -125,6 +126,34 @@ def test_process_entry_handles_exception_when_action_raises(
     cast("MagicMock", mock_rule.condition).matches.assert_called_once_with(mock_entry)
     cast("MagicMock", mock_rule.action).process.assert_called_once_with(mock_entry)
     mock_logger_exception.assert_called_once()
+
+
+def test_process_entry_logs_error_when_action_raises_ActionSkippedDueToPersistentError(
+    mocker: MockerFixture,
+    mock_entry: Entry,
+    mock_rule: Rule,
+) -> None:
+    # arrange
+    cast("MagicMock", mock_rule.condition).matches.return_value = True
+    cast(
+        "MagicMock", mock_rule.action
+    ).process.side_effect = ActionSkippedDueToPersistentError(
+        "skipped due to persistent error"
+    )
+    mock_logger_error = mocker.patch("feedly_entries_processor.process.logger.error")
+    mock_logger_exception = mocker.patch(
+        "feedly_entries_processor.process.logger.exception"
+    )
+
+    # act
+    process_entry(mock_entry, mock_rule)
+
+    # assert
+    cast("MagicMock", mock_rule.action).process.assert_called_once_with(mock_entry)
+    mock_logger_error.assert_called_once()
+    assert "test-rule" in mock_logger_error.call_args.args[0]
+    assert "skipped due to persistent error" in mock_logger_error.call_args.args[0]
+    mock_logger_exception.assert_not_called()
 
 
 def test_process_entries_calls_process_entry_for_each_entry_and_rule(

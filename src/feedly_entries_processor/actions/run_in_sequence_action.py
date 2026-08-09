@@ -23,7 +23,7 @@ class RunInSequenceAction(BaseAction):
     name: Literal["run_in_sequence"] = "run_in_sequence"
     actions: tuple[Action, ...] = Field(min_length=1)
 
-    def process(self, entry: Entry) -> None:
+    def _process(self, entry: Entry) -> None:
         """Process a Feedly entry by running each sub-action in sequence."""
         for action in self.actions:
             action.process(entry)
