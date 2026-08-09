@@ -1,6 +1,6 @@
 [project]
 name = "feedly-entries-processor"
-version = "0.9.0"
+dynamic = ["version"]
 description = ""
 authors = [
     { name = "dmingn", email = "dmingn@users.noreply.github.com" }
@@ -22,8 +22,14 @@ dependencies = [
 feedly-entries-processor = "feedly_entries_processor.__main__:app"
 
 [build-system]
-requires = ["uv_build>=0.9.22"]
-build-backend = "uv_build"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+fallback_version = "0.0.0"
 
 [dependency-groups]
 dev = [

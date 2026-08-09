@@ -4,27 +4,10 @@ from unittest.mock import MagicMock
 
 import pytest
 from requests.exceptions import ConnectionError as RequestsConnectionError
-from tenacity import wait_fixed
 
 from feedly_entries_processor.exceptions import TodoistApiError
 from feedly_entries_processor.todoist_client import add_task_with_retry
 from tests.helpers import make_http_error
-
-
-@pytest.fixture(autouse=True)
-def patch_retry_no_wait(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Patch retry to use wait=0 so tests do not sleep."""
-    from feedly_entries_processor.todoist_client import (  # noqa: PLC0415
-        _add_task_with_retry_impl,
-    )
-
-    no_wait_impl = _add_task_with_retry_impl.retry_with(  # type: ignore[attr-defined]
-        wait=wait_fixed(0),
-    )
-    monkeypatch.setattr(
-        "feedly_entries_processor.todoist_client._add_task_with_retry_impl",
-        no_wait_impl,
-    )
 
 
 def test_add_task_with_retry_returns_task_on_success() -> None:

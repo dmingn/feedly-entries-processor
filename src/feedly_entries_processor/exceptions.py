@@ -19,6 +19,10 @@ class FetchEntriesError(FeedlyEntriesProcessorError):
     """Raised when there is an error fetching entries from Feedly."""
 
 
+class ActionSkippedDueToPersistentError(FeedlyEntriesProcessorError):
+    """Raised when an action is skipped because it previously encountered a persistent error."""
+
+
 class TodoistApiError(FeedlyEntriesProcessorError):
     """Raised when there is an error communicating with the Todoist API.
 
