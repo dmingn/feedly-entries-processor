@@ -11,11 +11,11 @@ dependencies = [
     "feedly-client>=0.26",
     "logzero>=1.7.0",
     "pydantic>=2.13.4",
-    "pydantic-settings>=2.14.2",
+    "pydantic-settings>=2.15.0",
     "pydantic-yaml>=1.7.0",
     "tenacity>=9.1.4",
     "todoist-api-python>=3.1.0",
-    "typer>=0.26.8",
+    "typer>=0.27.1",
 ]
 
 [project.scripts]
@@ -36,7 +36,7 @@ dev = [
     "mypy>=1.17.1",
     "pytest>=9.1.1",
     "pytest-mock>=3.12.0",
-    "ruff>=0.15.20",
+    "ruff>=0.16.2",
     "types-requests>=2.32.4.20250913",
 ]
 
